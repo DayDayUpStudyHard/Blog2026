@@ -1,0 +1,54 @@
+package com.blog.controller;
+
+import cn.dev33.satoken.stp.StpUtil;
+import com.blog.common.Result;
+import com.blog.dto.LoginDto;
+import com.blog.dto.PasswordDto;
+import com.blog.entity.User;
+import com.blog.service.UserService;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    private final UserService userService;
+
+    public AuthController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @PostMapping("/login")
+    public Result<Map<String, Object>> login(@Valid @RequestBody LoginDto dto) {
+        User user = userService.login(dto.getUsername(), dto.getPassword());
+        StpUtil.login(user.getId());
+        Map<String, Object> map = new HashMap<>();
+        map.put("token", StpUtil.getTokenValue());
+        map.put("user", user);
+        return Result.ok(map);
+    }
+
+    @GetMapping("/info")
+    public Result<User> info() {
+        long userId = StpUtil.getLoginIdAsLong();
+        return Result.ok(userService.getById(userId));
+    }
+
+    @PutMapping("/password")
+    public Result<?> updatePassword(@Valid @RequestBody PasswordDto dto) {
+        long userId = StpUtil.getLoginIdAsLong();
+        userService.updatePassword(userId, dto.getOldPassword(), dto.getNewPassword());
+        return Result.ok();
+    }
+
+    @PutMapping("/profile")
+    public Result<?> updateProfile(@RequestBody User user) {
+        long userId = StpUtil.getLoginIdAsLong();
+        userService.updateProfile(userId, user.getNickname(), user.getEmail(), user.getAvatar());
+        return Result.ok();
+    }
+}

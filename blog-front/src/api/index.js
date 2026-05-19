@@ -1,0 +1,32 @@
+import axios from 'axios'
+
+const api = axios.create({
+  baseURL: 'http://localhost:8080',
+  timeout: 10000
+})
+
+export function getArticles(params) {
+  return api.get('/api/articles', { params })
+}
+
+export function getArticleDetail(id) {
+  return api.get(`/api/articles/${id}`)
+}
+
+export function getCategories() {
+  return api.get('/api/categories')
+}
+
+export function getTags() {
+  return api.get('/api/tags')
+}
+
+export function getComments(articleId, params) {
+  return api.get(`/api/articles/${articleId}/comments`, { params })
+}
+
+export function addComment(articleId, data) {
+  return api.post(`/api/articles/${articleId}/comments`, data)
+}
+
+export default api
