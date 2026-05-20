@@ -1,17 +1,24 @@
 <template>
   <div class="article-list">
     <div class="toolbar">
-      <el-select v-model="filterStatus" placeholder="状态筛选" clearable @change="fetchData" style="width:140px">
+      <el-select v-model="filterStatus" placeholder="状态筛选" clearable @change="fetchData" class="filter-select">
         <el-option label="已发布" :value="1" />
         <el-option label="草稿" :value="0" />
       </el-select>
-      <el-button type="primary" @click="$router.push('/articles/create')">新建文章</el-button>
+      <el-button type="primary" @click="$router.push('/articles/create')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新建文章
+      </el-button>
     </div>
     <el-table :data="articles" v-loading="loading" stripe>
       <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column prop="title" label="标题" min-width="200" />
-      <el-table-column label="状态" width="80">
-        <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '已发布' : '草稿' }}</el-tag></template>
+      <el-table-column prop="title" label="标题" min-width="220" />
+      <el-table-column label="状态" width="90">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
+            {{ row.status === 1 ? '已发布' : '草稿' }}
+          </el-tag>
+        </template>
       </el-table-column>
       <el-table-column prop="viewCount" label="阅读" width="80" />
       <el-table-column prop="createTime" label="创建时间" width="170">
@@ -65,6 +72,7 @@ async function doDelete(id) {
 </script>
 
 <style scoped>
-.toolbar { display: flex; justify-content: space-between; margin-bottom: 16px; }
-.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+.toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; }
+.filter-select { width: 140px; }
+.pagination { margin-top: 20px; display: flex; justify-content: flex-end; }
 </style>

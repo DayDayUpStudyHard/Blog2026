@@ -1,30 +1,30 @@
 <template>
   <div class="settings">
-    <h3>个人设置</h3>
-    <el-tabs v-model="activeTab" style="margin-top:16px;max-width:500px">
+    <h3 class="page-title">// 个人设置</h3>
+    <el-tabs v-model="activeTab" class="settings-tabs">
       <el-tab-pane label="基本资料" name="profile">
-        <el-form :model="profile" label-width="80px">
+        <el-form :model="profile" label-width="80px" class="settings-form">
           <el-form-item label="昵称">
-            <el-input v-model="profile.nickname" />
+            <el-input v-model="profile.nickname" placeholder="你的昵称" />
           </el-form-item>
           <el-form-item label="邮箱">
-            <el-input v-model="profile.email" />
+            <el-input v-model="profile.email" placeholder="email@example.com" />
           </el-form-item>
           <el-form-item label="头像URL">
-            <el-input v-model="profile.avatar" />
+            <el-input v-model="profile.avatar" placeholder="https://..." />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="updateProfile" :loading="saving">保存</el-button>
+            <el-button type="primary" @click="updateProfile" :loading="saving">保存修改</el-button>
           </el-form-item>
         </el-form>
       </el-tab-pane>
       <el-tab-pane label="修改密码" name="password">
-        <el-form :model="passwordForm" label-width="80px">
+        <el-form :model="passwordForm" label-width="80px" class="settings-form">
           <el-form-item label="旧密码">
-            <el-input v-model="passwordForm.oldPassword" type="password" show-password />
+            <el-input v-model="passwordForm.oldPassword" type="password" show-password placeholder="输入当前密码" />
           </el-form-item>
           <el-form-item label="新密码">
-            <el-input v-model="passwordForm.newPassword" type="password" show-password />
+            <el-input v-model="passwordForm.newPassword" type="password" show-password placeholder="输入新密码" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="updatePassword" :loading="saving">修改密码</el-button>
@@ -78,5 +78,8 @@ async function updatePassword() {
 </script>
 
 <style scoped>
-.settings h3 { font-size: 18px; color: #303133; }
+.settings { }
+.page-title { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0 0 8px; }
+.settings-tabs { margin-top: 8px; }
+.settings-form { max-width: 440px; margin-top: 8px; }
 </style>

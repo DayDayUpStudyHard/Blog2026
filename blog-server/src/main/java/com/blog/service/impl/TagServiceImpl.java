@@ -8,6 +8,7 @@ import com.blog.mapper.TagMapper;
 import com.blog.service.TagService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,7 +30,14 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public Tag create(Tag tag) {
+        tag.setCreateTime(LocalDateTime.now());
         tagMapper.insert(tag);
+        return tag;
+    }
+
+    @Override
+    public Tag update(Tag tag) {
+        tagMapper.updateById(tag);
         return tag;
     }
 

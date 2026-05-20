@@ -20,6 +20,12 @@ public class TagAdminController {
         return Result.ok(tagService.create(tag));
     }
 
+    @PutMapping("/{id}")
+    public Result<Tag> update(@PathVariable Long id, @RequestBody Tag tag) {
+        tag.setId(id);
+        return Result.ok(tagService.update(tag));
+    }
+
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
         tagService.delete(id);

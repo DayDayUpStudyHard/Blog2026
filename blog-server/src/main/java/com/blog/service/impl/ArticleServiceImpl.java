@@ -10,6 +10,7 @@ import com.blog.mapper.ArticleTagMapper;
 import com.blog.service.ArticleService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 
 @Service
 public class ArticleServiceImpl implements ArticleService {
@@ -73,6 +74,9 @@ public class ArticleServiceImpl implements ArticleService {
         article.setIsTop(dto.getIsTop() != null ? dto.getIsTop() : 0);
         article.setStatus(dto.getStatus() != null ? dto.getStatus() : 0);
         article.setViewCount(0);
+        LocalDateTime now = LocalDateTime.now();
+        article.setCreateTime(now);
+        article.setUpdateTime(now);
         articleMapper.insert(article);
 
         if (dto.getTagIds() != null) {
@@ -98,6 +102,7 @@ public class ArticleServiceImpl implements ArticleService {
         article.setCategoryId(dto.getCategoryId());
         if (dto.getIsTop() != null) article.setIsTop(dto.getIsTop());
         if (dto.getStatus() != null) article.setStatus(dto.getStatus());
+        article.setUpdateTime(LocalDateTime.now());
         articleMapper.updateById(article);
 
         articleTagMapper.delete(new LambdaQueryWrapper<ArticleTag>().eq(ArticleTag::getArticleId, id));

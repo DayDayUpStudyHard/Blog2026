@@ -7,6 +7,7 @@ import com.blog.entity.Comment;
 import com.blog.mapper.CommentMapper;
 import com.blog.service.CommentService;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
 
 @Service
 public class CommentServiceImpl implements CommentService {
@@ -34,6 +35,7 @@ public class CommentServiceImpl implements CommentService {
         comment.setEmail(dto.getEmail());
         comment.setContent(dto.getContent());
         comment.setStatus(1);
+        comment.setCreateTime(LocalDateTime.now());
         commentMapper.insert(comment);
         return comment;
     }

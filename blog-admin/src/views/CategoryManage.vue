@@ -1,14 +1,17 @@
 <template>
   <div class="category-manage">
     <div class="toolbar">
-      <h3>分类管理</h3>
-      <el-button type="primary" @click="showForm(null)">新建分类</el-button>
+      <h3 class="page-title">// 分类管理</h3>
+      <el-button type="primary" @click="showForm(null)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新建分类
+      </el-button>
     </div>
     <el-table :data="categories" v-loading="loading" stripe>
       <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column prop="name" label="名称" />
-      <el-table-column prop="description" label="描述" />
-      <el-table-column prop="sort" label="排序" width="80" />
+      <el-table-column prop="name" label="名称" width="180" />
+      <el-table-column prop="description" label="描述" min-width="200" />
+      <el-table-column prop="sort" label="排序" width="80" align="center" />
       <el-table-column label="操作" width="160">
         <template #default="{ row }">
           <el-button text type="primary" @click="showForm(row)">编辑</el-button>
@@ -22,10 +25,10 @@
     <el-dialog v-model="dialogVisible" :title="editing ? '编辑分类' : '新建分类'" width="480px">
       <el-form :model="form" label-width="60px">
         <el-form-item label="名称">
-          <el-input v-model="form.name" />
+          <el-input v-model="form.name" placeholder="分类名称" />
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="form.description" />
+          <el-input v-model="form.description" placeholder="分类描述" />
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.sort" :min="0" />
@@ -84,6 +87,6 @@ async function doDelete(id) {
 </script>
 
 <style scoped>
-.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.toolbar h3 { font-size: 18px; color: #303133; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-title { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0; }
 </style>

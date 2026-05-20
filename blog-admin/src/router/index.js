@@ -1,15 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import AdminLayout from '../components/AdminLayout.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: () => import('../views/LoginView.vue'), meta: { noAuth: true } },
-  { path: '/', name: 'Dashboard', component: () => import('../views/Dashboard.vue') },
-  { path: '/articles', name: 'ArticleList', component: () => import('../views/ArticleList.vue') },
-  { path: '/articles/create', name: 'ArticleCreate', component: () => import('../views/ArticleEdit.vue') },
-  { path: '/articles/:id/edit', name: 'ArticleEdit', component: () => import('../views/ArticleEdit.vue') },
-  { path: '/categories', name: 'Categories', component: () => import('../views/CategoryManage.vue') },
-  { path: '/comments', name: 'Comments', component: () => import('../views/CommentManage.vue') },
-  { path: '/tags', name: 'Tags', component: () => import('../views/TagManage.vue') },
-  { path: '/settings', name: 'Settings', component: () => import('../views/Settings.vue') }
+  {
+    path: '/',
+    component: AdminLayout,
+    children: [
+      { path: '', name: 'Dashboard', component: () => import('../views/Dashboard.vue') },
+      { path: 'articles', name: 'ArticleList', component: () => import('../views/ArticleList.vue') },
+      { path: 'articles/create', name: 'ArticleCreate', component: () => import('../views/ArticleEdit.vue') },
+      { path: 'articles/:id/edit', name: 'ArticleEdit', component: () => import('../views/ArticleEdit.vue') },
+      { path: 'categories', name: 'Categories', component: () => import('../views/CategoryManage.vue') },
+      { path: 'comments', name: 'Comments', component: () => import('../views/CommentManage.vue') },
+      { path: 'tags', name: 'Tags', component: () => import('../views/TagManage.vue') },
+      { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue') }
+    ]
+  }
 ]
 
 const router = createRouter({

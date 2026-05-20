@@ -1,31 +1,43 @@
 <template>
   <div class="article-edit">
-    <h3>{{ isEdit ? '编辑文章' : '新建文章' }}</h3>
-    <el-form :model="form" :rules="rules" ref="formRef" label-width="60px" style="margin-top:20px;max-width:900px">
+    <h3 class="page-title">{{ isEdit ? '// 编辑文章' : '// 新建文章' }}</h3>
+    <el-form :model="form" :rules="rules" ref="formRef" label-width="60px" class="edit-form">
       <el-form-item label="标题" prop="title">
         <el-input v-model="form.title" placeholder="文章标题" />
       </el-form-item>
       <el-form-item label="摘要">
         <el-input v-model="form.summary" type="textarea" :rows="2" placeholder="留空则自动截取正文前200字" />
       </el-form-item>
-      <el-form-item label="分类">
-        <el-select v-model="form.categoryId" placeholder="选择分类" clearable>
-          <el-option v-for="cat in categories" :key="cat.id" :label="cat.name" :value="cat.id" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="标签">
-        <el-select v-model="form.tagIds" multiple placeholder="选择标签">
-          <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="封面">
-        <el-input v-model="form.cover" placeholder="封面图片URL，或通过下方上传" />
-      </el-form-item>
-      <el-form-item label="置顶">
-        <el-switch v-model="form.isTop" :active-value="1" :inactive-value="0" />
-      </el-form-item>
+      <el-row :gutter="16">
+        <el-col :span="12">
+          <el-form-item label="分类">
+            <el-select v-model="form.categoryId" placeholder="选择分类" clearable style="width:100%">
+              <el-option v-for="cat in categories" :key="cat.id" :label="cat.name" :value="cat.id" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="标签">
+            <el-select v-model="form.tagIds" multiple placeholder="选择标签" style="width:100%">
+              <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="16">
+        <el-col :span="12">
+          <el-form-item label="封面">
+            <el-input v-model="form.cover" placeholder="封面图片URL" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="置顶">
+            <el-switch v-model="form.isTop" :active-value="1" :inactive-value="0" />
+          </el-form-item>
+        </el-col>
+      </el-row>
       <el-form-item label="内容" prop="content">
-        <MdEditor v-model="form.content" language="en-US" style="height:500px" />
+        <MdEditor v-model="form.content" language="en-US" style="height:520px" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="saveDraft">保存草稿</el-button>
@@ -117,5 +129,7 @@ async function publish() {
 </script>
 
 <style scoped>
-.article-edit h3 { font-size: 18px; color: #303133; }
+.article-edit { }
+.page-title { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0 0 20px; }
+.edit-form { max-width: 960px; }
 </style>

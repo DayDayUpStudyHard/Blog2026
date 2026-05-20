@@ -1,7 +1,7 @@
 <template>
   <div class="comment-manage">
-    <h3>留言管理</h3>
-    <div style="margin-top:16px">
+    <h3 class="page-title">// 留言管理</h3>
+    <div class="filter-bar">
       <el-radio-group v-model="filterStatus" @change="fetchData">
         <el-radio-button :value="null">全部</el-radio-button>
         <el-radio-button :value="1">已通过</el-radio-button>
@@ -9,14 +9,14 @@
         <el-radio-button :value="-1">已拒绝</el-radio-button>
       </el-radio-group>
     </div>
-    <el-table :data="comments" v-loading="loading" stripe style="margin-top:16px">
+    <el-table :data="comments" v-loading="loading" stripe>
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column prop="author" label="作者" width="120" />
-      <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
+      <el-table-column prop="content" label="内容" min-width="220" show-overflow-tooltip />
       <el-table-column prop="articleId" label="文章ID" width="80" />
-      <el-table-column label="状态" width="80">
+      <el-table-column label="状态" width="90">
         <template #default="{ row }">
-          <el-tag :type="row.status === 1 ? 'success' : row.status === 0 ? 'warning' : 'danger'">
+          <el-tag :type="row.status === 1 ? 'success' : row.status === 0 ? 'warning' : 'danger'" size="small">
             {{ row.status === 1 ? '已通过' : row.status === 0 ? '待审核' : '已拒绝' }}
           </el-tag>
         </template>
@@ -24,12 +24,12 @@
       <el-table-column prop="createTime" label="时间" width="170">
         <template #default="{ row }">{{ row.createTime ? row.createTime.substring(0, 16) : '' }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="180">
+      <el-table-column label="操作" width="200">
         <template #default="{ row }">
-          <el-button v-if="row.status !== 1" text type="success" @click="doUpdateStatus(row.id, 1)">通过</el-button>
-          <el-button v-if="row.status !== -1" text type="warning" @click="doUpdateStatus(row.id, -1)">拒绝</el-button>
+          <el-button v-if="row.status !== 1" text type="success" size="small" @click="doUpdateStatus(row.id, 1)">通过</el-button>
+          <el-button v-if="row.status !== -1" text type="warning" size="small" @click="doUpdateStatus(row.id, -1)">拒绝</el-button>
           <el-popconfirm title="确定删除？" @confirm="doDelete(row.id)">
-            <template #reference><el-button text type="danger">删除</el-button></template>
+            <template #reference><el-button text type="danger" size="small">删除</el-button></template>
           </el-popconfirm>
         </template>
       </el-table-column>
@@ -78,6 +78,8 @@ async function doDelete(id) {
 </script>
 
 <style scoped>
-.comment-manage h3 { font-size: 18px; color: #303133; }
-.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+.comment-manage { }
+.page-title { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0 0 16px; }
+.filter-bar { margin-bottom: 20px; }
+.pagination { margin-top: 20px; display: flex; justify-content: flex-end; }
 </style>

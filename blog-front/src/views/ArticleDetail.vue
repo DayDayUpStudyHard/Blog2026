@@ -1,11 +1,21 @@
 <template>
   <n-spin :show="loading">
     <article v-if="article" class="article-detail">
-      <h1>{{ article.title }}</h1>
-      <div class="meta">
-        <span>{{ formatDate(article.createTime) }}</span>
-        <span>{{ article.viewCount }} 阅读</span>
+      <div class="article-header">
+        <n-tag v-if="article.isTop" :bordered="false" size="small" class="top-badge">置顶</n-tag>
+        <h1>{{ article.title }}</h1>
+        <div class="meta">
+          <span class="meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {{ formatDate(article.createTime) }}
+          </span>
+          <span class="meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            {{ article.viewCount }} 阅读
+          </span>
+        </div>
       </div>
+      <div class="divider"></div>
       <div class="content markdown-body" v-html="renderMarkdown(article.content || '')"></div>
     </article>
     <n-empty v-else-if="!loading" description="文章不存在" />
@@ -56,15 +66,21 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 
 <style scoped>
 .article-detail { padding: 32px 0; }
-.article-detail h1 { font-size: 28px; color: #333; line-height: 1.4; }
-.meta { margin-top: 16px; display: flex; gap: 16px; color: #bbb; font-size: 14px; }
-.content { margin-top: 32px; font-size: 16px; line-height: 1.85; color: #444; }
-.content :deep(h2) { margin: 28px 0 14px; font-size: 22px; }
-.content :deep(h3) { margin: 22px 0 10px; font-size: 18px; }
-.content :deep(p) { margin-bottom: 14px; }
-.content :deep(code) { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 14px; }
-.content :deep(pre) { background: #2d2d2d; color: #ccc; padding: 16px; border-radius: 6px; overflow-x: auto; margin: 16px 0; }
-.content :deep(pre code) { background: none; padding: 0; color: inherit; }
-.content :deep(img) { max-width: 100%; border-radius: 4px; }
-.content :deep(blockquote) { border-left: 3px solid #5b8c5a; padding: 8px 16px; color: #888; margin: 16px 0; background: #f9f9f9; }
+
+.article-header { text-align: center; padding-bottom: 16px; }
+.article-header h1 {
+  font-size: 30px; color: #e8eaed; line-height: 1.45; margin: 12px 0 16px;
+  font-family: 'JetBrains Mono', monospace; font-weight: 700;
+}
+.top-badge {
+  --n-text-color: #7c3aed !important;
+  --n-border: 1px solid rgba(124,58,237,0.35) !important;
+}
+.meta { display: flex; gap: 20px; justify-content: center; color: #555d6b; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+.meta-item { display: flex; align-items: center; gap: 5px; }
+
+.divider {
+  height: 1px; margin: 24px 0 32px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
 </style>
