@@ -4,18 +4,20 @@
       <h3 class="page-title">// tags</h3>
       <el-button type="primary" @click="showForm(null)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        NEW TAG
+        新建标签
       </el-button>
     </div>
 
     <div v-loading="loading" class="tag-grid">
-      <div v-for="tag in tags" :key="tag.id" class="tag-card" @click="showForm(tag)">
+      <div v-for="tag in tags" :key="tag.id" class="tag-card">
         <div class="tag-card-glow"></div>
-        <span class="tag-name"># {{ tag.name }}</span>
+        <span class="tag-name" @click="showForm(tag)"># {{ tag.name }}</span>
         <div class="tag-meta">
-          <span class="tag-id">ID:{{ tag.id }}</span>
-          <el-popconfirm title="确定删除？" @confirm="doDelete(tag.id)" @click.stop>
-            <template #reference><button class="tag-close-btn" @click.stop>&times;</button></template>
+          <span class="tag-id" @click="showForm(tag)">ID:{{ tag.id }}</span>
+          <el-popconfirm title="确定删除？" @confirm="doDelete(tag.id)">
+            <template #reference>
+              <button class="tag-close-btn">&times;</button>
+            </template>
           </el-popconfirm>
         </div>
       </div>
@@ -27,8 +29,8 @@
         <el-input v-model="tagName" placeholder="标签名称" @keyup.enter="save" size="large" class="tag-input" />
       </div>
       <template #footer>
-        <el-button @click="dialogVisible = false">CANCEL</el-button>
-        <el-button type="primary" @click="save">SAVE</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="save">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -88,7 +90,7 @@ async function doDelete(id) {
 .tag-card {
   position: relative; display: flex; align-items: center; gap: 12px;
   cursor: pointer; padding: 10px 16px; border-radius: 10px;
-  background: rgba(17,24,39,0.6); border: 1px solid rgba(0,212,170,0.15);
+  background: rgba(26,39,56,0.6); border: 1px solid rgba(0,212,170,0.15);
   backdrop-filter: blur(8px);
   transition: all 0.3s; overflow: hidden;
 }
@@ -97,6 +99,7 @@ async function doDelete(id) {
   position: absolute; inset: 0;
   background: linear-gradient(135deg, transparent 40%, rgba(0,212,170,0.04) 50%, transparent 60%);
   background-size: 200% 100%;
+  pointer-events: none;
 }
 .tag-card:hover {
   border-color: rgba(0,212,170,0.4);
@@ -108,14 +111,15 @@ async function doDelete(id) {
   position: absolute; inset: -1px; border-radius: 10px; padding: 1px;
   background: linear-gradient(135deg, transparent, rgba(0,212,170,0.15), transparent);
   opacity: 0; transition: opacity 0.3s;
+  pointer-events: none;
 }
 .tag-card:hover .tag-card-glow { opacity: 1; }
 
 .tag-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #00d4aa; font-weight: 500; }
 .tag-meta { display: flex; align-items: center; gap: 8px; }
-.tag-id { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #555d6b; }
+.tag-id { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #6e7687; }
 .tag-close-btn {
-  background: none; border: none; color: #555d6b; font-size: 16px; cursor: pointer;
+  background: none; border: none; color: #6e7687; font-size: 16px; cursor: pointer;
   padding: 0 2px; line-height: 1; transition: all 0.2s; border-radius: 3px;
 }
 .tag-close-btn:hover { color: #ff4757; background: rgba(255,71,87,0.1); }

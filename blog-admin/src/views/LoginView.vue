@@ -148,15 +148,15 @@ async function doLogin() {
 /* ═══ Page ═══ */
 .login-page {
   height: 100vh; display: flex; justify-content: center; align-items: center;
-  position: relative; overflow: hidden; background: #060b14;
+  position: relative; overflow: hidden; background: #0d1520;
 }
 
 /* ═══ Background ═══ */
 .bg-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
   background-size: 60px 60px;
   mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
 }
@@ -189,7 +189,7 @@ async function doLogin() {
   animation: borderRotate 6s linear infinite;
 }
 .card-inner {
-  background: rgba(13,18,28,0.9);
+  background: rgba(22,34,48,0.9);
   border-radius: 20px;
   padding: 52px 44px 36px;
   backdrop-filter: blur(24px);
@@ -214,31 +214,31 @@ async function doLogin() {
 }
 
 .subtitle {
-  text-align: center; color: #555d6b; font-family: 'JetBrains Mono', monospace;
+  text-align: center; color: #6e7687; font-family: 'JetBrains Mono', monospace;
   font-size: 11px; margin-bottom: 40px; letter-spacing: 3px;
   display: flex; align-items: center; justify-content: center; gap: 12px;
   text-transform: uppercase;
 }
-.subtitle-line { width: 30px; height: 1px; background: rgba(255,255,255,0.08); }
+.subtitle-line { width: 30px; height: 1px; background: rgba(255,255,255,0.10); }
 
 /* Form */
 .login-form { position: relative; z-index: 1; }
 .login-form :deep(.el-form-item) { margin-bottom: 20px; }
 .login-form :deep(.el-input__wrapper) {
-  background: rgba(255,255,255,0.03) !important;
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.10);
   border-radius: 10px !important;
   padding: 8px 14px;
   transition: all 0.3s;
 }
 .login-form :deep(.el-input__wrapper:hover) {
   border-color: rgba(0,212,170,0.3);
-  background: rgba(255,255,255,0.05) !important;
+  background: rgba(255,255,255,0.08) !important;
 }
 .login-form :deep(.el-input.is-focus .el-input__wrapper) {
   border-color: rgba(0,212,170,0.5);
   box-shadow: 0 0 0 3px rgba(0,212,170,0.08), 0 0 16px rgba(0,212,170,0.05) !important;
-  background: rgba(255,255,255,0.06) !important;
+  background: rgba(255,255,255,0.10) !important;
 }
 
 /* Button */
@@ -268,7 +268,7 @@ async function doLogin() {
 /* Footer */
 .login-footer {
   text-align: center; margin-top: 32px;
-  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #3a4050;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #4a5060;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   letter-spacing: 1px;
 }

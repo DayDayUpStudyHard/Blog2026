@@ -90,7 +90,7 @@
               </div>
               <div class="user-meta">
                 <span class="user-name">{{ user.nickname || user.username || 'Admin' }}</span>
-                <span class="user-role">admin</span>
+                <span class="user-role">管理员</span>
               </div>
               <div class="status-dot" title="在线"></div>
             </div>
@@ -235,7 +235,7 @@ function logout() {
 /* ═══ Root ═══ */
 .layout-root {
   height: 100vh; overflow: hidden; position: relative;
-  background: #060b14;
+  background: #0d1520;
 }
 
 /* ═══ Background ═══ */
@@ -243,8 +243,8 @@ function logout() {
 .bg-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse at 30% 50%, black 40%, transparent 70%);
 }
@@ -265,7 +265,7 @@ function logout() {
 }
 .sidebar-inner {
   height: 100%; display: flex; flex-direction: column;
-  background: rgba(9,14,22,0.92);
+  background: rgba(18,27,40,0.92);
   border-right: 1px solid rgba(255,255,255,0.05);
   backdrop-filter: blur(24px);
   position: relative;
@@ -295,7 +295,7 @@ function logout() {
 /* Menu */
 .menu { flex: 1; border-right: none !important; padding: 8px 0; }
 .menu :deep(.el-menu-item) {
-  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6b7280;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7d8790;
   margin: 2px 10px; border-radius: 8px; padding: 0 18px !important; height: 42px;
   transition: all 0.25s; position: relative; overflow: visible;
   display: flex; align-items: center; gap: 8px;
@@ -313,7 +313,7 @@ function logout() {
 .menu-icon { display: flex; align-items: center; opacity: 0.5; transition: opacity 0.2s; flex-shrink: 0; }
 .menu :deep(.el-menu-item.is-active) .menu-icon { opacity: 1; color: #00d4aa; }
 .menu :deep(.el-menu-item):hover .menu-icon { opacity: 0.8; }
-.menu-num { font-size: 9px; color: #4a5060; min-width: 14px; transition: color 0.2s; }
+.menu-num { font-size: 9px; color: #5a6070; min-width: 14px; transition: color 0.2s; }
 .menu :deep(.el-menu-item.is-active) .menu-num { color: #00d4aa; }
 .menu-label { flex: 1; }
 .menu-indicator {
@@ -348,7 +348,7 @@ function logout() {
 }
 .user-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .user-name { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #e8eaed; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.user-role { font-size: 10px; color: #555d6b; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
+.user-role { font-size: 10px; color: #6e7687; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
 .status-dot {
   width: 7px; height: 7px; border-radius: 50%; background: #00d4aa;
   box-shadow: 0 0 6px #00d4aa, 0 0 12px rgba(0,212,170,0.4);
@@ -361,7 +361,7 @@ function logout() {
 
 /* Topbar */
 .topbar {
-  background: rgba(9,14,22,0.85); border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: rgba(18,27,40,0.85); border-bottom: 1px solid rgba(255,255,255,0.05);
   display: flex; align-items: center; justify-content: space-between;
   height: 56px; padding: 0 28px; backdrop-filter: blur(20px);
   position: sticky; top: 0; z-index: 10; flex-shrink: 0;
@@ -384,7 +384,7 @@ function logout() {
 .logout-btn {
   display: flex; align-items: center; padding: 6px 10px;
   background: none; border: 1px solid transparent; border-radius: 6px;
-  color: #6b7280; cursor: pointer; transition: all 0.2s;
+  color: #7d8790; cursor: pointer; transition: all 0.2s;
 }
 .logout-btn:hover { color: #ff4757; border-color: rgba(255,71,87,0.3); background: rgba(255,71,87,0.06); }
 

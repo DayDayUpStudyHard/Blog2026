@@ -2,7 +2,7 @@
   <div class="dashboard">
     <div class="page-header">
       <h3 class="page-title">// dashboard</h3>
-      <span class="page-badge">SYSTEM ONLINE</span>
+      <span class="page-badge">系统在线</span>
     </div>
 
     <!-- Stat Cards -->
@@ -43,27 +43,27 @@ const animProgress = ref([0, 0, 0])
 
 const statItems = computed(() => [
   {
-    label: 'Articles',
+    label: '文章',
     value: stats.value.articleCount,
-    bgLabel: 'POSTS',
+    bgLabel: '文章',
     color: '#00d4aa',
     gradient: 'linear-gradient(135deg, rgba(0,212,170,0.2), rgba(0,212,170,0.05))',
     glow: '0 0 20px rgba(0,212,170,0.2)',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
   },
   {
-    label: 'Categories',
+    label: '分类',
     value: stats.value.categoryCount,
-    bgLabel: 'DIRS',
+    bgLabel: '分类',
     color: '#7c3aed',
     gradient: 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(124,58,237,0.05))',
     glow: '0 0 20px rgba(124,58,237,0.2)',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
   },
   {
-    label: 'Comments',
+    label: '留言',
     value: stats.value.commentCount,
-    bgLabel: 'MSGS',
+    bgLabel: '留言',
     color: '#f0a020',
     gradient: 'linear-gradient(135deg, rgba(240,160,32,0.2), rgba(240,160,32,0.05))',
     glow: '0 0 20px rgba(240,160,32,0.2)',
@@ -121,7 +121,7 @@ onMounted(async () => {
 
 .stat-card {
   position: relative; padding: 32px 28px; border-radius: 16px;
-  background: rgba(17,24,39,0.7);
+  background: rgba(26,39,56,0.7);
   border: 1px solid rgba(255,255,255,0.05);
   backdrop-filter: blur(16px);
   overflow: hidden;
@@ -139,7 +139,7 @@ onMounted(async () => {
 .stat-bg-label {
   position: absolute; top: 12px; right: 16px;
   font-family: 'JetBrains Mono', monospace; font-size: 52px; font-weight: 700;
-  color: rgba(255,255,255,0.015); pointer-events: none; line-height: 1;
+  color: rgba(255,255,255,0.025); pointer-events: none; line-height: 1;
   user-select: none;
 }
 
@@ -162,7 +162,7 @@ onMounted(async () => {
   animation: counterTick 2s ease-in-out infinite;
 }
 .label {
-  margin-top: 4px; color: #555d6b; font-size: 12px;
+  margin-top: 4px; color: #6e7687; font-size: 12px;
   font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 1px;
 }
 

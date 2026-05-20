@@ -4,7 +4,7 @@
       <h3 class="page-title">// articles</h3>
       <div class="toolbar">
         <div class="filter-group">
-          <span class="filter-label">FILTER:</span>
+          <span class="filter-label">筛选:</span>
           <el-select v-model="filterStatus" placeholder="状态" clearable @change="fetchData" class="filter-select" size="small">
             <el-option label="已发布" :value="1" />
             <el-option label="草稿" :value="0" />
@@ -12,7 +12,7 @@
         </div>
         <el-button type="primary" @click="$router.push('/articles/create')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          NEW POST
+          新建文章
         </el-button>
       </div>
     </div>
@@ -29,7 +29,7 @@
           <template #default="{ row }">
             <span class="status-badge" :class="row.status === 1 ? 'published' : 'draft'">
               <span class="status-dot-inner"></span>
-              {{ row.status === 1 ? 'PUBLISHED' : 'DRAFT' }}
+              {{ row.status === 1 ? '已发布' : '草稿' }}
             </span>
           </template>
         </el-table-column>
@@ -48,13 +48,13 @@
             <div class="actions">
               <button class="action-btn edit" @click="$router.push(`/articles/${row.id}/edit`)">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                EDIT
+                编辑
               </button>
               <el-popconfirm title="确定删除？" @confirm="doDelete(row.id)">
                 <template #reference>
                   <button class="action-btn delete" @click.stop>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    DEL
+                    删除
                   </button>
                 </template>
               </el-popconfirm>
@@ -107,11 +107,11 @@ async function doDelete(id) {
 .page-title { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0; }
 .toolbar { display: flex; align-items: center; gap: 14px; }
 .filter-group { display: flex; align-items: center; gap: 8px; }
-.filter-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #555d6b; letter-spacing: 1px; }
+.filter-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #6e7687; letter-spacing: 1px; }
 .filter-select { width: 120px; }
 
 .table-container {
-  background: rgba(17,24,39,0.5); border: 1px solid rgba(255,255,255,0.04);
+  background: rgba(26,39,56,0.5); border: 1px solid rgba(255,255,255,0.04);
   border-radius: 12px; overflow: hidden;
   backdrop-filter: blur(12px);
 }
@@ -130,7 +130,7 @@ async function doDelete(id) {
 .draft .status-dot-inner { background: #8b949e; }
 
 .view-count { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8b949e; }
-.time-cell { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6b7280; }
+.time-cell { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #7d8790; }
 
 .actions { display: flex; gap: 8px; justify-content: center; }
 .action-btn {

@@ -1,8 +1,8 @@
 <template>
   <div class="article-edit">
     <div class="page-header">
-      <h3 class="page-title">{{ isEdit ? '// edit post' : '// new post' }}</h3>
-      <span class="mode-badge">{{ isEdit ? 'EDIT MODE' : 'CREATE MODE' }}</span>
+      <h3 class="page-title">{{ isEdit ? '// 编辑文章' : '// 新建文章' }}</h3>
+      <span class="mode-badge">{{ isEdit ? '编辑模式' : '新建模式' }}</span>
     </div>
 
     <div class="form-card">
@@ -39,7 +39,7 @@
             <el-form-item label="置顶">
               <div class="top-switch">
                 <el-switch v-model="form.isTop" :active-value="1" :inactive-value="0" />
-                <span class="top-label">{{ form.isTop ? 'PINNED' : 'NORMAL' }}</span>
+                <span class="top-label">{{ form.isTop ? '已置顶' : '普通' }}</span>
               </div>
             </el-form-item>
           </el-col>
@@ -51,13 +51,13 @@
           <div class="form-actions">
             <el-button type="primary" @click="saveDraft" class="action-primary">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-              SAVE DRAFT
+              保存草稿
             </el-button>
             <el-button type="success" @click="publish" class="action-publish">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-              PUBLISH
+              发布
             </el-button>
-            <el-button @click="$router.back()">CANCEL</el-button>
+            <el-button @click="$router.back()">取消</el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -138,7 +138,7 @@ async function publish() { form.value.status = 1; await save(true) }
 }
 
 .form-card {
-  background: rgba(17,24,39,0.4); border: 1px solid rgba(255,255,255,0.04);
+  background: rgba(26,39,56,0.4); border: 1px solid rgba(255,255,255,0.04);
   border-radius: 16px; padding: 32px 32px 24px;
   backdrop-filter: blur(12px);
   max-width: 1000px;
@@ -155,7 +155,7 @@ async function publish() { form.value.status = 1; await save(true) }
 
 .top-switch { display: flex; align-items: center; gap: 10px; }
 .top-label {
-  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #555d6b;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #6e7687;
   letter-spacing: 1px;
 }
 

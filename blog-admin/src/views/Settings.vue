@@ -2,7 +2,7 @@
   <div class="settings">
     <div class="page-header">
       <h3 class="page-title">// settings</h3>
-      <span class="page-badge">CONFIG</span>
+      <span class="page-badge">配置</span>
     </div>
 
     <div class="settings-card">
@@ -11,7 +11,7 @@
           <template #label>
             <span class="tab-label">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              PROFILE
+              个人资料
             </span>
           </template>
           <el-form :model="profile" label-width="60px" class="settings-form">
@@ -27,7 +27,7 @@
             <el-form-item>
               <el-button type="primary" @click="updateProfile" :loading="saving">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                SAVE
+                保存
               </el-button>
             </el-form-item>
           </el-form>
@@ -36,7 +36,7 @@
           <template #label>
             <span class="tab-label">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              PASSWORD
+              修改密码
             </span>
           </template>
           <el-form :model="passwordForm" label-width="60px" class="settings-form">
@@ -49,7 +49,7 @@
             <el-form-item>
               <el-button type="primary" @click="updatePassword" :loading="saving">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                UPDATE
+                更新
               </el-button>
             </el-form-item>
           </el-form>
@@ -107,7 +107,7 @@ async function updatePassword() {
 }
 
 .settings-card {
-  background: rgba(17,24,39,0.4); border: 1px solid rgba(255,255,255,0.04);
+  background: rgba(26,39,56,0.4); border: 1px solid rgba(255,255,255,0.04);
   border-radius: 16px; padding: 8px 32px 32px;
   backdrop-filter: blur(12px); max-width: 560px;
 }
