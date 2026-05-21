@@ -97,3 +97,75 @@ npm run dev
 | GET | `/api/articles/{id}/comments` | 文章留言 |
 | POST | `/api/articles/{id}/comments` | 发表留言 |
 | GET/POST/PUT/DELETE | `/api/admin/*` | 后台管理接口 (需登录) |
+
+## 文件存储配置
+
+图片上传支持**本地存储**和**S3 兼容云存储**（Cloudflare R2 / 阿里云 OSS / MinIO），通过 `application.yml` 切换。
+
+### 本地存储（默认）
+
+无需额外配置，上传文件保存在 `upload/` 目录下，通过 `/upload/xxx.png` 访问。
+
+### Cloudflare R2
+
+1. 在 Cloudflare Dashboard 创建 R2 Bucket
+2. 在 `application.yml` 中配置：
+
+```yaml
+blog:
+  storage:
+    type: s3
+    s3:
+      endpoint: https://<account-id>.r2.cloudflarestorage.com
+      region: auto
+      access-key: <R2 Access Key ID>
+      secret-key: <R2 Secret Access Key>
+      bucket: blog-images
+      public-url: https://cdn.yourdomain.com   # 可选：绑定自定义域名
+```
+
+> **注意：**
+> - R2 的 endpoint 中 `<account-id>` 在 R2 管理页右上角可找到
+> - Access Key 在 R2 页面 → "管理 R2 API 令牌" 创建，权限选"对象读和写"
+> - 如果不配置 `public-url`，返回的 URL 为 `endpoint/bucket/key` 格式，可能无法直接访问，建议绑定自定义域名
+
+### 阿里云 OSS
+
+阿里云 OSS 支持 S3 兼容模式，配置方式与 R2 类似：
+
+```yaml
+blog:
+  storage:
+    type: s3
+    s3:
+      endpoint: https://oss-cn-hangzhou.aliyuncs.com
+      region: oss-cn-hangzhou
+      access-key: <AccessKey ID>
+      secret-key: <AccessKey Secret>
+      bucket: blog-images
+      public-url: https://cdn.yourdomain.com   # 推荐：绑定 CDN 域名
+```
+
+> **注意：**
+> - 需先在阿里云 RAM 控制台创建 AccessKey，并为对应用户授权 OSS 读写权限
+> - Bucket 需设置 ACL 为"公共读"或绑定 CDN 域名，否则图片无法公网访问
+> - `endpoint` 根据 Bucket 所在地域选择，见[OSS 地域列表](https://help.aliyun.com/document_detail/31837.html)
+
+### MinIO（自建对象存储）
+
+```yaml
+blog:
+  storage:
+    type: s3
+    s3:
+      endpoint: http://localhost:9000
+      region: us-east-1
+      access-key: <MinIO Access Key>
+      secret-key: <MinIO Secret Key>
+      bucket: blog-images
+      public-url: http://localhost:9000/blog-images
+```
+
+> **注意：**
+> - MinIO 默认使用路径样式访问（`forcePathStyle: true`），代码已启用此选项
+> - Bucket 需在 MinIO Console 中提前创建并设为 public 访问

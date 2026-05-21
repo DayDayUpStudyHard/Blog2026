@@ -8,19 +8,23 @@ import com.blog.entity.ArticleTag;
 import com.blog.mapper.ArticleMapper;
 import com.blog.mapper.ArticleTagMapper;
 import com.blog.service.ArticleService;
+import com.blog.service.TagService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleMapper articleMapper;
     private final ArticleTagMapper articleTagMapper;
+    private final TagService tagService;
 
-    public ArticleServiceImpl(ArticleMapper articleMapper, ArticleTagMapper articleTagMapper) {
+    public ArticleServiceImpl(ArticleMapper articleMapper, ArticleTagMapper articleTagMapper, TagService tagService) {
         this.articleMapper = articleMapper;
         this.articleTagMapper = articleTagMapper;
+        this.tagService = tagService;
     }
 
     @Override
@@ -31,10 +35,13 @@ public class ArticleServiceImpl implements ArticleService {
                 .orderByDesc(Article::getCreateTime);
         if (categoryId != null) wrapper.eq(Article::getCategoryId, categoryId);
         if (keyword != null && !keyword.isBlank()) {
-            wrapper.and(w -> w.like(Article::getTitle, keyword).or().like(Article::getSummary, keyword));
+            wrapper.and(w -> w.like(Article::getTitle, keyword).or().like(Article::getSummary, keyword).or().like(Article::getContent, keyword));
         }
         Page<Article> result = articleMapper.selectPage(new Page<>(page, size), wrapper);
-        result.getRecords().forEach(a -> a.setContent(null));
+        result.getRecords().forEach(a -> {
+            a.setContent(null);
+            a.setTags(tagService.getByArticleId(a.getId()));
+        });
         return result;
     }
 
@@ -46,7 +53,40 @@ public class ArticleServiceImpl implements ArticleService {
         }
         article.setViewCount(article.getViewCount() + 1);
         articleMapper.updateById(article);
+        article.setTags(tagService.getByArticleId(id));
         return article;
+    }
+
+    @Override
+    public Map<String, Object> getNav(Long id) {
+        Article current = articleMapper.selectById(id);
+        if (current == null) return Map.of();
+
+        // prev: older article (largest create_time < current, status=1)
+        var prevList = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                .eq(Article::getStatus, 1)
+                .lt(Article::getCreateTime, current.getCreateTime())
+                .orderByDesc(Article::getCreateTime)
+                .last("limit 1"));
+        Map<String, Object> prev = null;
+        if (!prevList.isEmpty()) {
+            var a = prevList.get(0);
+            prev = Map.of("id", a.getId(), "title", a.getTitle());
+        }
+
+        // next: newer article (smallest create_time > current, status=1)
+        var nextList = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                .eq(Article::getStatus, 1)
+                .gt(Article::getCreateTime, current.getCreateTime())
+                .orderByAsc(Article::getCreateTime)
+                .last("limit 1"));
+        Map<String, Object> next = null;
+        if (!nextList.isEmpty()) {
+            var a = nextList.get(0);
+            next = Map.of("id", a.getId(), "title", a.getTitle());
+        }
+
+        return Map.of("prev", prev != null ? prev : Map.of(), "next", next != null ? next : Map.of());
     }
 
     @Override
