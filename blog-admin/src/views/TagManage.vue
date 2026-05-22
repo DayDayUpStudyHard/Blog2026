@@ -1,7 +1,7 @@
 <template>
   <div class="tag-manage">
     <div class="page-header">
-      <h3 class="page-title">// tags</h3>
+      <h3 class="page-title">标签管理</h3>
       <el-button type="primary" @click="showForm(null)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         新建标签
@@ -9,25 +9,20 @@
     </div>
 
     <div v-loading="loading" class="tag-grid">
-      <div v-for="tag in tags" :key="tag.id" class="tag-card">
-        <div class="tag-card-glow"></div>
-        <span class="tag-name" @click="showForm(tag)"># {{ tag.name }}</span>
-        <div class="tag-meta">
-          <span class="tag-id" @click="showForm(tag)">ID:{{ tag.id }}</span>
-          <el-popconfirm title="确定删除？" @confirm="doDelete(tag.id)">
-            <template #reference>
-              <button class="tag-close-btn">&times;</button>
-            </template>
-          </el-popconfirm>
-        </div>
+      <div v-for="tag in tags" :key="tag.id" class="tag-card" @click="showForm(tag)">
+        <span class="tag-name"># {{ tag.name }}</span>
+        <span class="tag-id">ID:{{ tag.id }}</span>
+        <el-popconfirm title="确定删除？" @confirm="doDelete(tag.id)">
+          <template #reference>
+            <button class="tag-close-btn" @click.stop>&times;</button>
+          </template>
+        </el-popconfirm>
       </div>
       <el-empty v-if="!loading && tags.length === 0" description="暂无标签" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑标签' : '新建标签'" width="420px" class="cool-dialog">
-      <div class="dialog-form">
-        <el-input v-model="tagName" placeholder="标签名称" @keyup.enter="save" size="large" class="tag-input" />
-      </div>
+    <el-dialog v-model="dialogVisible" :title="editing ? '编辑标签' : '新建标签'" width="400px">
+      <el-input v-model="tagName" placeholder="标签名称" @keyup.enter="save" size="large" class="tag-input" />
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="save">保存</el-button>
@@ -82,52 +77,32 @@ async function doDelete(id) {
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.page-title { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-title { font-size: 18px; color: #303133; font-weight: 600; margin: 0; }
 
-.tag-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+.tag-grid { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .tag-card {
-  position: relative; display: flex; align-items: center; gap: 12px;
-  cursor: pointer; padding: 10px 16px; border-radius: 10px;
-  background: rgba(26,39,56,0.6); border: 1px solid rgba(0,212,170,0.15);
-  backdrop-filter: blur(8px);
-  transition: all 0.3s; overflow: hidden;
-}
-.tag-card::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, transparent 40%, rgba(0,212,170,0.04) 50%, transparent 60%);
-  background-size: 200% 100%;
-  pointer-events: none;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; padding: 8px 16px; border-radius: 8px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.5);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .tag-card:hover {
-  border-color: rgba(0,212,170,0.4);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 20px rgba(0,212,170,0.08);
+  border-color: #409EFF;
+  background: #f0f7ff;
+  box-shadow: 0 4px 16px rgba(64,158,255,0.1);
+  transform: translateY(-2px);
 }
-.tag-card:hover::before { animation: sweepRight 2s ease-in-out infinite; }
-.tag-card-glow {
-  position: absolute; inset: -1px; border-radius: 10px; padding: 1px;
-  background: linear-gradient(135deg, transparent, rgba(0,212,170,0.15), transparent);
-  opacity: 0; transition: opacity 0.3s;
-  pointer-events: none;
-}
-.tag-card:hover .tag-card-glow { opacity: 1; }
 
-.tag-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #00d4aa; font-weight: 500; }
-.tag-meta { display: flex; align-items: center; gap: 8px; }
-.tag-id { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #6e7687; }
+.tag-name { font-size: 13px; color: #409EFF; font-weight: 500; }
+.tag-id { font-size: 11px; color: #c0c4cc; }
 .tag-close-btn {
-  background: none; border: none; color: #6e7687; font-size: 16px; cursor: pointer;
+  background: none; border: none; color: #c0c4cc; font-size: 16px; cursor: pointer;
   padding: 0 2px; line-height: 1; transition: all 0.2s; border-radius: 3px;
 }
-.tag-close-btn:hover { color: #ff4757; background: rgba(255,71,87,0.1); }
+.tag-close-btn:hover { color: #f56c6c; background: #fef0f0; }
 
 .tag-input { padding-top: 8px; }
-
-@keyframes sweepRight {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
 </style>

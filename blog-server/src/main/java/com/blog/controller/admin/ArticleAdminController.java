@@ -4,6 +4,7 @@ import com.blog.common.Result;
 import com.blog.dto.ArticleDto;
 import com.blog.entity.Article;
 import com.blog.service.ArticleService;
+import com.blog.service.TagService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +16,11 @@ import java.util.Map;
 public class ArticleAdminController {
 
     private final ArticleService articleService;
+    private final TagService tagService;
 
-    public ArticleAdminController(ArticleService articleService) {
+    public ArticleAdminController(ArticleService articleService, TagService tagService) {
         this.articleService = articleService;
+        this.tagService = tagService;
     }
 
     @GetMapping
@@ -34,7 +37,11 @@ public class ArticleAdminController {
 
     @GetMapping("/{id}")
     public Result<Article> detail(@PathVariable Long id) {
-        return Result.ok(articleService.getById(id));
+        Article article = articleService.getById(id);
+        if (article != null) {
+            article.setTags(tagService.getByArticleId(id));
+        }
+        return Result.ok(article);
     }
 
     @PostMapping

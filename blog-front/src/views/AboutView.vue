@@ -1,9 +1,7 @@
 <template>
   <div class="about-page">
     <div class="page-head">
-      <h2 class="page-title">
-        <span class="title-icon">&gt;</span> 关于 Blog2026
-      </h2>
+      <h2 class="page-title">关于 Blog2026</h2>
       <div class="page-line"></div>
     </div>
 
@@ -19,7 +17,7 @@
       </div>
 
       <div class="about-card">
-        <div class="card-icon purple">
+        <div class="card-icon green">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
         </div>
         <div class="card-text">
@@ -29,7 +27,7 @@
       </div>
 
       <div class="about-card">
-        <div class="card-icon">
+        <div class="card-icon violet">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
         <div class="card-text">
@@ -41,12 +39,11 @@
 
     <div class="tech-section">
       <div class="section-head">
-        <h3><span class="title-icon">#</span> 技术栈</h3>
+        <h3>技术栈</h3>
         <div class="head-line"></div>
       </div>
       <div class="stack-grid">
         <span v-for="tech in techs" :key="tech" class="stack-item">
-          <span class="stack-dot"></span>
           {{ tech }}
         </span>
       </div>
@@ -59,65 +56,54 @@ const techs = ['Spring Boot', 'MyBatis-Plus', 'MySQL', 'Redis', 'Sa-Token', 'Vue
 </script>
 
 <style scoped>
-.about-page { padding: 32px 0; }
-.page-head { margin-bottom: 32px; }
-.page-title { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: #e8eaed; margin-bottom: 12px; font-weight: 600; }
-.title-icon { color: #00d4aa; margin-right: 8px; }
-.page-line { height: 1px; background: linear-gradient(90deg, rgba(0,212,170,0.25), transparent); }
+.about-page { padding: 28px 0; }
+.page-head { margin-bottom: 28px; }
+.page-title { font-size: 22px; color: #303133; margin-bottom: 10px; font-weight: 600; }
+.page-line { height: 1px; background: #e8ecf0; }
 
-.about-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.about-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
 
 .about-card {
   display: flex; gap: 18px; align-items: flex-start;
-  background: rgba(26,39,56,0.5); border: 1px solid rgba(255,255,255,0.04);
-  padding: 20px 22px; border-radius: 14px;
-  backdrop-filter: blur(8px);
-  transition: all 0.35s;
+  background: #ffffff; border: 1px solid #e8ecf0;
+  padding: 20px 22px; border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .about-card:hover {
-  border-color: rgba(0,212,170,0.2);
-  background: rgba(26,39,56,0.7);
-  transform: translateX(4px);
-  box-shadow: 0 0 30px rgba(0,212,170,0.06);
+  border-color: #409EFF;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  transform: translateY(-3px);
 }
 
 .card-icon {
   width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
-  background: linear-gradient(135deg, rgba(0,212,170,0.15), rgba(0,212,170,0.05));
-  border: 1px solid rgba(0,212,170,0.15);
-  display: flex; align-items: center; justify-content: center; color: #00d4aa;
+  background: linear-gradient(135deg, #ecf5ff, #d9ecff);
+  display: flex; align-items: center; justify-content: center; color: #409EFF;
 }
-.card-icon.purple {
-  background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(124,58,237,0.05));
-  border-color: rgba(124,58,237,0.15); color: #7c3aed;
-}
+.card-icon.green { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #67c23a; }
+.card-icon.violet { background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #8b5cf6; }
 
 .card-text h4 {
-  font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #e8eaed;
-  font-weight: 500; margin: 0 0 6px;
+  font-size: 15px; color: #303133;
+  font-weight: 600; margin: 0 0 6px;
 }
-.card-text p { font-size: 14px; color: #8b949e; line-height: 1.65; margin: 0; }
+.card-text p { font-size: 14px; color: #909399; line-height: 1.65; margin: 0; }
 
-/* Tech stack */
 .tech-section { }
-.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.section-head h3 { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0; white-space: nowrap; }
-.head-line { flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.section-head h3 { font-size: 16px; color: #303133; font-weight: 600; margin: 0; white-space: nowrap; }
+.head-line { flex: 1; height: 1px; background: #e8ecf0; }
 
-.stack-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.stack-grid { display: flex; gap: 8px; flex-wrap: wrap; }
 .stack-item {
-  display: flex; align-items: center; gap: 7px;
-  padding: 7px 16px; border-radius: 8px;
-  font-family: 'JetBrains Mono', monospace; font-size: 13px;
-  background: rgba(26,39,56,0.5); border: 1px solid rgba(0,212,170,0.12);
-  color: #00d4aa; transition: all 0.3s;
+  padding: 7px 14px; border-radius: 6px;
+  font-size: 13px;
+  background: #ffffff; border: 1px solid #e8ecf0;
+  color: #606266; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .stack-item:hover {
-  background: rgba(0,212,170,0.1); border-color: rgba(0,212,170,0.3);
-  box-shadow: 0 0 16px rgba(0,212,170,0.1); transform: translateY(-2px);
-}
-.stack-dot {
-  width: 5px; height: 5px; border-radius: 50%; background: #00d4aa;
-  box-shadow: 0 0 4px rgba(0,212,170,0.4);
+  border-color: #409EFF; color: #409EFF; background: #ecf5ff;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 </style>

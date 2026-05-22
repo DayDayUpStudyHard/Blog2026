@@ -1,16 +1,14 @@
 <template>
   <div class="search-page">
     <div class="page-head">
-      <h2 class="page-title">
-        <span class="title-icon">$</span> 搜索文章
-      </h2>
+      <h2 class="page-title">搜索文章</h2>
       <div class="page-line"></div>
     </div>
 
     <div class="search-box">
       <div class="search-input-wrap">
         <div class="search-prefix">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
         <n-input
           v-model:value="keyword" placeholder="输入关键词搜索文章..."
@@ -19,9 +17,9 @@
         />
         <n-button @click="search" size="large" class="search-btn">
           <template #icon>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
           </template>
-          SEARCH
+          搜索
         </n-button>
       </div>
     </div>
@@ -33,7 +31,7 @@
     </n-spin>
 
     <div v-if="!loading && searched && articles.length === 0" class="no-result">
-      <span class="no-result-icon">~$</span> 未找到相关文章
+      未找到相关文章
     </div>
   </div>
 </template>
@@ -58,24 +56,26 @@ async function search() {
 </script>
 
 <style scoped>
-.search-page { padding: 32px 0; }
-.page-head { margin-bottom: 28px; }
-.page-title { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: #e8eaed; margin-bottom: 12px; font-weight: 600; }
-.title-icon { color: #00d4aa; margin-right: 8px; }
-.page-line { height: 1px; background: linear-gradient(90deg, rgba(0,212,170,0.25), transparent); }
+.search-page { padding: 28px 0; }
+.page-head { margin-bottom: 24px; }
+.page-title { font-size: 22px; color: #303133; margin-bottom: 10px; font-weight: 600; }
+.page-line { height: 1px; background: #e8ecf0; }
 
-.search-box { margin-bottom: 36px; }
+.search-box { margin-bottom: 32px; }
 .search-input-wrap {
   display: flex; gap: 0; align-items: center;
-  background: rgba(26,39,56,0.5); border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 14px; overflow: hidden;
-  transition: all 0.3s; max-width: 560px; padding-left: 16px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 10px; overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); max-width: 560px; padding-left: 16px;
 }
 .search-input-wrap:focus-within {
-  border-color: rgba(0,212,170,0.4);
-  box-shadow: 0 0 24px rgba(0,212,170,0.08);
+  border-color: rgba(64,158,255,0.4);
+  box-shadow: 0 0 0 3px rgba(64,158,255,0.12);
 }
-.search-prefix { color: #6e7687; display: flex; flex-shrink: 0; }
+.search-prefix { color: #909399; display: flex; flex-shrink: 0; }
 .search-input {
   flex: 1;
   --n-border: none !important;
@@ -89,20 +89,18 @@ async function search() {
 
 .search-btn {
   flex-shrink: 0;
-  --n-color: rgba(0,212,170,0.1) !important;
-  --n-color-hover: rgba(0,212,170,0.18) !important;
-  --n-border: 1px solid rgba(0,212,170,0.3) !important;
-  --n-border-hover: 1px solid rgba(0,212,170,0.6) !important;
-  --n-text-color: #00d4aa !important;
-  font-family: 'JetBrains Mono', monospace !important; font-size: 12px !important;
-  letter-spacing: 1px; border-radius: 0 14px 14px 0 !important; height: 42px !important;
-  transition: all 0.3s;
+  --n-color: #ecf5ff !important;
+  --n-color-hover: #d9ecff !important;
+  --n-border: 1px solid #409EFF !important;
+  --n-border-hover: 1px solid #66b1ff !important;
+  --n-text-color: #409EFF !important;
+  font-size: 12px !important;
+  border-radius: 0 10px 10px 0 !important; height: 42px !important;
+  transition: all 0.2s;
 }
-.search-btn:hover { box-shadow: 0 0 20px rgba(0,212,170,0.2); }
 
-.no-result { text-align: center; padding: 48px 0; color: #6e7687; font-family: 'JetBrains Mono', monospace; font-size: 14px; }
-.no-result-icon { color: #00d4aa; margin-right: 6px; }
+.no-result { text-align: center; padding: 48px 0; color: #909399; font-size: 14px; }
 
-.list-enter-active { transition: all 0.45s ease; }
-.list-enter-from { opacity: 0; transform: translateY(24px) scale(0.96); }
+.list-enter-active { transition: all 0.4s ease; }
+.list-enter-from { opacity: 0; transform: translateY(20px); }
 </style>

@@ -1,9 +1,7 @@
 <template>
   <div class="category-page">
     <div class="page-head">
-      <h2 class="page-title">
-        <span class="title-icon">##</span> 分类浏览
-      </h2>
+      <h2 class="page-title">分类浏览</h2>
       <div class="page-line"></div>
     </div>
 
@@ -14,7 +12,6 @@
           class="cat-btn" :class="{ active: activeCat === cat.id }"
           @click="selectCategory(cat.id)"
         >
-          <div class="cat-glow"></div>
           <div class="cat-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           </div>
@@ -32,7 +29,6 @@
 
     <div v-if="articles.length" class="result">
       <div class="result-head">
-        <span class="result-prompt">$</span>
         <span class="result-count">找到 {{ articles.length }} 篇文章</span>
       </div>
       <ArticleCard v-for="(article, i) in articles" :key="article.id" :article="article" :style="{ '--i': i }" />
@@ -66,50 +62,40 @@ async function selectCategory(id) {
 </script>
 
 <style scoped>
-.category-page { padding: 32px 0; }
-.page-head { margin-bottom: 28px; }
-.page-title { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: #e8eaed; margin-bottom: 12px; font-weight: 600; }
-.title-icon { color: #00d4aa; margin-right: 8px; }
-.page-line { height: 1px; background: linear-gradient(90deg, rgba(0,212,170,0.25), transparent); }
+.category-page { padding: 28px 0; }
+.page-head { margin-bottom: 24px; }
+.page-title { font-size: 22px; color: #303133; margin-bottom: 10px; font-weight: 600; }
+.page-line { height: 1px; background: #e8ecf0; }
 
-.category-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 36px; }
+.category-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
 .cat-btn {
-  position: relative; display: flex; align-items: center; gap: 12px;
-  background: rgba(26,39,56,0.6); border: 1px solid rgba(255,255,255,0.05);
-  padding: 14px 18px; border-radius: 12px; cursor: pointer;
-  transition: all 0.3s; text-align: left; overflow: hidden;
-  backdrop-filter: blur(8px);
+  display: flex; align-items: center; gap: 12px;
+  background: #ffffff; border: 1px solid #e8ecf0;
+  padding: 14px 18px; border-radius: 10px; cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); text-align: left;
 }
 .cat-btn:hover, .cat-btn.active {
-  border-color: rgba(0,212,170,0.4);
-  background: rgba(0,212,170,0.08);
-  box-shadow: 0 0 24px rgba(0,212,170,0.1);
+  border-color: #409EFF;
+  background: #ecf5ff;
   transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
 .cat-btn.active {
-  border-color: rgba(0,212,170,0.6);
-  box-shadow: 0 0 30px rgba(0,212,170,0.15);
+  border-color: #409EFF;
+  background: linear-gradient(135deg, #ecf5ff, #f0f9eb);
 }
-.cat-glow {
-  position: absolute; inset: -1px; border-radius: 12px; padding: 1px;
-  background: linear-gradient(135deg, transparent, rgba(0,212,170,0.1), transparent);
-  opacity: 0; transition: opacity 0.3s;
-}
-.cat-btn.active .cat-glow { opacity: 1; }
 
-.cat-icon { color: #6e7687; transition: color 0.3s; flex-shrink: 0; }
-.cat-btn.active .cat-icon { color: #00d4aa; }
+.cat-icon { color: #909399; transition: color 0.2s; flex-shrink: 0; }
+.cat-btn.active .cat-icon { color: #409EFF; }
 .cat-info { display: flex; flex-direction: column; gap: 2px; }
-.cat-name { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #e8eaed; font-weight: 500; }
-.cat-desc { font-size: 12px; color: #6e7687; }
+.cat-name { font-size: 15px; color: #303133; font-weight: 500; }
+.cat-desc { font-size: 12px; color: #909399; }
 .cat-arrow {
-  color: #4a5060; transition: all 0.3s; display: flex; margin-left: auto;
+  color: #c0c4cc; transition: all 0.2s; display: flex; margin-left: auto;
 }
-.cat-btn.active .cat-arrow { color: #00d4aa; transform: translateX(2px); }
+.cat-btn.active .cat-arrow { color: #409EFF; transform: translateX(2px); }
 
-/* Results */
-.result { margin-top: 8px; }
-.result-head { margin-bottom: 12px; display: flex; gap: 8px; align-items: center; }
-.result-prompt { color: #00d4aa; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-.result-count { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6e7687; }
+.result { margin-top: 4px; }
+.result-head { margin-bottom: 12px; }
+.result-count { font-size: 13px; color: #909399; }
 </style>

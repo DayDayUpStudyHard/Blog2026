@@ -21,6 +21,10 @@ export function getTags() {
   return api.get('/api/tags')
 }
 
+export function getArticleNav(id) {
+  return api.get(`/api/articles/${id}/nav`)
+}
+
 export function getComments(articleId, params) {
   return api.get(`/api/articles/${articleId}/comments`, { params })
 }

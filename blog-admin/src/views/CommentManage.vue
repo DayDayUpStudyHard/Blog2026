@@ -1,7 +1,7 @@
 <template>
   <div class="comment-manage">
     <div class="page-header">
-      <h3 class="page-title">// comments</h3>
+      <h3 class="page-title">留言管理</h3>
       <div class="toolbar">
         <div class="filter-group">
           <span class="filter-label">状态:</span>
@@ -29,10 +29,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="articleId" label="文章ID" width="80" align="center" />
-        <el-table-column label="状态" width="110" align="center">
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <span class="status-badge" :class="statusClass(row.status)">
-              <span class="status-dot-inner"></span>
               {{ statusText(row.status) }}
             </span>
           </template>
@@ -42,21 +41,21 @@
             <span class="time-cell">{{ row.createTime ? row.createTime.substring(0, 16) : '—' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" align="center">
+        <el-table-column label="操作" width="220" align="center">
           <template #default="{ row }">
             <div class="actions">
               <button v-if="row.status !== 1" class="action-btn approve" @click="doUpdateStatus(row.id, 1)">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                 通过
               </button>
               <button v-if="row.status !== -1" class="action-btn reject" @click="doUpdateStatus(row.id, -1)">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 拒绝
               </button>
               <el-popconfirm title="确定删除？" @confirm="doDelete(row.id)">
                 <template #reference>
                   <button class="action-btn del" @click.stop>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     删除
                   </button>
                 </template>
@@ -114,48 +113,46 @@ async function doDelete(id) {
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.page-title { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-title { font-size: 18px; color: #303133; font-weight: 600; margin: 0; }
 .toolbar { display: flex; align-items: center; }
 .filter-group { display: flex; align-items: center; gap: 10px; }
-.filter-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #6e7687; letter-spacing: 1px; }
+.filter-label { font-size: 12px; color: #909399; }
 
 .table-container {
-  background: rgba(26,39,56,0.5); border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 12px; overflow: hidden;
+  background: rgba(255,255,255,0.6);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 12px; overflow: hidden;
 }
 
-.author-cell { color: #e8eaed; font-weight: 500; }
-.content-cell { color: #b0b8c4; }
-.time-cell { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #7d8790; }
+.author-cell { color: #303133; font-weight: 500; }
+.content-cell { color: #606266; }
+.time-cell { font-size: 12px; color: #909399; }
 
 .status-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.5px;
-  padding: 3px 10px; border-radius: 4px;
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 500;
+  padding: 2px 10px; border-radius: 4px;
 }
-.status-badge.approved { color: #00d4aa; background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.2); }
-.status-badge.pending { color: #f0a020; background: rgba(240,160,32,0.08); border: 1px solid rgba(240,160,32,0.2); }
-.status-badge.rejected { color: #ff4757; background: rgba(255,71,87,0.08); border: 1px solid rgba(255,71,87,0.2); }
-.status-dot-inner { width: 5px; height: 5px; border-radius: 50%; }
-.approved .status-dot-inner { background: #00d4aa; box-shadow: 0 0 4px rgba(0,212,170,0.5); }
-.pending .status-dot-inner { background: #f0a020; box-shadow: 0 0 4px rgba(240,160,32,0.5); }
-.rejected .status-dot-inner { background: #ff4757; box-shadow: 0 0 4px rgba(255,71,87,0.5); }
+.status-badge.approved { color: #67c23a; background: #f0f9eb; }
+.status-badge.pending { color: #e6a23c; background: #fdf6ec; }
+.status-badge.rejected { color: #f56c6c; background: #fef0f0; }
 
-.actions { display: flex; gap: 6px; justify-content: center; }
+.actions { display: flex; gap: 5px; justify-content: center; }
 .action-btn {
   display: inline-flex; align-items: center; gap: 3px;
   padding: 4px 8px; border-radius: 5px; border: 1px solid transparent;
-  font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer;
-  transition: all 0.2s; background: none; letter-spacing: 0.5px;
+  font-size: 11px; cursor: pointer;
+  transition: all 0.2s; background: none;
 }
-.action-btn.approve { color: #00d4aa; border-color: rgba(0,212,170,0.2); }
-.action-btn.approve:hover { background: rgba(0,212,170,0.1); border-color: rgba(0,212,170,0.4); box-shadow: 0 0 10px rgba(0,212,170,0.1); }
-.action-btn.reject { color: #f0a020; border-color: rgba(240,160,32,0.2); }
-.action-btn.reject:hover { background: rgba(240,160,32,0.1); border-color: rgba(240,160,32,0.4); box-shadow: 0 0 10px rgba(240,160,32,0.1); }
-.action-btn.del { color: #ff4757; border-color: rgba(255,71,87,0.2); }
-.action-btn.del:hover { background: rgba(255,71,87,0.1); border-color: rgba(255,71,87,0.4); box-shadow: 0 0 10px rgba(255,71,87,0.1); }
+.action-btn.approve { color: #67c23a; border-color: #e1f3d8; }
+.action-btn.approve:hover { background: #f0f9eb; border-color: #67c23a; transform: translateY(-1px); }
+.action-btn.reject { color: #e6a23c; border-color: #faecd8; }
+.action-btn.reject:hover { background: #fdf6ec; border-color: #e6a23c; transform: translateY(-1px); }
+.action-btn.del { color: #f56c6c; border-color: #fde2e2; }
+.action-btn.del:hover { background: #fef0f0; border-color: #f56c6c; transform: translateY(-1px); }
 
-.pagination { margin-top: 24px; display: flex; justify-content: flex-end; }
+.pagination { margin-top: 20px; display: flex; justify-content: flex-end; }
 </style>

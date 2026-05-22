@@ -1,8 +1,7 @@
 <template>
   <div class="settings">
     <div class="page-header">
-      <h3 class="page-title">// settings</h3>
-      <span class="page-badge">配置</span>
+      <h3 class="page-title">个人设置</h3>
     </div>
 
     <div class="settings-card">
@@ -98,31 +97,28 @@ async function updatePassword() {
 </script>
 
 <style scoped>
-.page-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
-.page-title { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #e8eaed; font-weight: 500; margin: 0; }
-.page-badge {
-  font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #7c3aed;
-  padding: 2px 10px; border-radius: 20px;
-  border: 1px solid rgba(124,58,237,0.25); letter-spacing: 2px;
-}
+.page-header { margin-bottom: 20px; }
+.page-title { font-size: 18px; color: #303133; font-weight: 600; margin: 0; }
 
 .settings-card {
-  background: rgba(26,39,56,0.4); border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 16px; padding: 8px 32px 32px;
-  backdrop-filter: blur(12px); max-width: 560px;
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 14px; padding: 8px 32px 32px;
+  max-width: 560px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.04);
 }
 
 .settings-tabs :deep(.el-tabs__header) { margin-bottom: 8px; }
 .tab-label {
-  display: flex; align-items: center; gap: 7px;
-  font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 1px;
-  color: inherit;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: inherit;
 }
 
-.settings-form { margin-top: 16px; }
+.settings-form { margin-top: 8px; }
 .settings-form :deep(.el-form-item__label) {
-  font-family: 'JetBrains Mono', monospace; font-size: 11px;
-  color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px;
+  font-size: 12px; color: #606266; font-weight: 500;
 }
 .settings-form :deep(.el-button--primary) {
   display: flex; align-items: center; gap: 6px;

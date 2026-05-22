@@ -42,4 +42,9 @@ public class ArticleController {
         Article article = articleService.getDetail(id);
         return Result.ok(article);
     }
+
+    @GetMapping("/{id}/nav")
+    public Result<Map<String, Object>> nav(@PathVariable Long id) {
+        return Result.ok(articleService.getNav(id));
+    }
 }
