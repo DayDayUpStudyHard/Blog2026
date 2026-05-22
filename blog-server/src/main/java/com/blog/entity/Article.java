@@ -3,6 +3,7 @@ package com.blog.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @TableName("t_article")
@@ -23,4 +24,6 @@ public class Article {
     private LocalDateTime updateTime;
     @TableLogic
     private Integer deleted;
+    @TableField(exist = false)
+    private List<Tag> tags;
 }
