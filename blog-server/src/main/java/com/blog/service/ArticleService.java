@@ -15,5 +15,4 @@ public interface ArticleService {
     Article create(ArticleDto dto);
     Article update(Long id, ArticleDto dto);
     void delete(Long id);
-    Map<String, Object> getNav(Long id);
 }
