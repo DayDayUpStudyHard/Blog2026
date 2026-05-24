@@ -12,6 +12,9 @@
         <router-link to="/categories" class="nav-link">
           <span class="nav-label">分类</span>
         </router-link>
+        <router-link to="/tools" class="nav-link">
+          <span class="nav-label">工具</span>
+        </router-link>
         <router-link to="/about" class="nav-link">
           <span class="nav-label">关于</span>
         </router-link>
