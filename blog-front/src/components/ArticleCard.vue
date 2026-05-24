@@ -1,6 +1,14 @@
 <template>
   <article class="card" @mouseenter="hover = true" @mouseleave="hover = false">
     <div class="card-inner" :class="{ hover }">
+      <div class="card-cover" v-if="article.cover">
+        <img :src="article.cover" :alt="article.title" />
+      </div>
+      <div class="card-cover placeholder" v-else>
+        <div class="cover-gradient" :style="{ background: gradients[i % gradients.length] }">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+      </div>
       <div class="card-body">
         <div class="card-tags">
           <span v-if="article.isTop" class="top-badge">置顶</span>
@@ -42,6 +50,16 @@ import { ref, computed } from 'vue'
 const props = defineProps({ article: Object })
 const hover = ref(false)
 
+const gradients = [
+  'linear-gradient(135deg, #667eea, #764ba2)',
+  'linear-gradient(135deg, #f093fb, #f5576c)',
+  'linear-gradient(135deg, #4facfe, #00f2fe)',
+  'linear-gradient(135deg, #43e97b, #38f9d7)',
+  'linear-gradient(135deg, #fa709a, #fee140)',
+  'linear-gradient(135deg, #a18cd1, #fbc2eb)',
+]
+const i = computed(() => (props.article?.id || 0) % gradients.length)
+
 const readingTime = computed(() => {
   const text = props.article?.content || ''
   if (!text) return ''
@@ -76,6 +94,22 @@ function formatDate(dateStr) {
 }
 
 .card-body { position: relative; }
+
+.card-cover {
+  height: 160px; overflow: hidden; border-radius: 10px;
+  margin-bottom: 16px;
+}
+.card-cover img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.card-inner.hover .card-cover img { transform: scale(1.04); }
+
+.card-cover.placeholder { height: 100px; }
+.cover-gradient {
+  width: 100%; height: 100%; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
 
 .card-tags { margin-bottom: 8px; }
 .top-badge {

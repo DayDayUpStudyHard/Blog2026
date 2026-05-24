@@ -82,6 +82,10 @@
             <span class="topbar-path">{{ pageTitle }}</span>
           </div>
           <div class="topbar-actions">
+            <button class="theme-toggle" @click="toggleTheme" :title="themeLabel">
+              <svg v-if="currentTheme === 'light'" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </button>
             <a href="/" target="_blank" class="action-btn" title="查看博客">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               <span>查看博客</span>
@@ -129,6 +133,15 @@ onMounted(async () => {
   } catch { logout() }
 })
 
+const currentTheme = ref(localStorage.getItem('blog-admin-theme') || 'light')
+const themeLabel = computed(() => currentTheme.value === 'light' ? '切换暗色模式' : '切换亮色模式')
+
+function toggleTheme() {
+  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+  document.documentElement.setAttribute('data-theme', currentTheme.value)
+  localStorage.setItem('blog-admin-theme', currentTheme.value)
+}
+
 function logout() {
   localStorage.removeItem('blog-token')
   router.push('/login')
@@ -172,14 +185,15 @@ function logout() {
 .logo-text { font-size: 17px; font-weight: 700; color: #303133; letter-spacing: -0.3px; }
 
 /* Menu */
-.menu { flex: 1; border-right: none !important; padding: 4px 0; }
+.menu { flex: 1; border-right: none !important; padding: 4px 0; position: relative; }
 .menu :deep(.el-menu-item) {
   font-size: 13px; color: #606266;
   margin: 1px 8px; border-radius: 8px; padding: 0 16px !important; height: 40px;
-  transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+  transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+  position: relative; overflow: visible;
 }
 .menu :deep(.el-menu-item):hover {
-  background: #f0f7ff; color: #409EFF; transform: translateX(2px);
+  background: #f0f7ff; color: #409EFF; transform: translateX(4px);
 }
 .menu :deep(.el-menu-item.is-active) {
   background: #ecf5ff !important;
@@ -187,10 +201,38 @@ function logout() {
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(64,158,255,0.12);
 }
-.menu-icon { display: flex; align-items: center; opacity: 0.55; flex-shrink: 0; }
+/* Active glow bar */
+.menu :deep(.el-menu-item.is-active)::before {
+  content: '';
+  position: absolute; left: -6px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 20px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, #409EFF, #66b1ff);
+  box-shadow: 0 0 8px rgba(64,158,255,0.5);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(64,158,255,0.4); }
+  50% { box-shadow: 0 0 14px rgba(64,158,255,0.7); }
+}
+.menu-icon { display: flex; align-items: center; opacity: 0.55; flex-shrink: 0; transition: all 0.3s; }
 .menu :deep(.el-menu-item.is-active) .menu-icon { opacity: 1; }
 .menu :deep(.el-menu-item):hover .menu-icon { opacity: 0.85; }
 .menu-label { flex: 1; }
+
+/* Menu items get distinct accent colors */
+.menu :deep(.el-menu-item:nth-child(1).is-active) { color: #409EFF !important; }
+.menu :deep(.el-menu-item:nth-child(1).is-active)::before { background: linear-gradient(180deg, #409EFF, #66b1ff); }
+.menu :deep(.el-menu-item:nth-child(2).is-active) { color: #10b981 !important; }
+.menu :deep(.el-menu-item:nth-child(2).is-active)::before { background: linear-gradient(180deg, #10b981, #34d399); }
+.menu :deep(.el-menu-item:nth-child(3).is-active) { color: #f59e0b !important; }
+.menu :deep(.el-menu-item:nth-child(3).is-active)::before { background: linear-gradient(180deg, #f59e0b, #fbbf24); }
+.menu :deep(.el-menu-item:nth-child(4).is-active) { color: #8b5cf6 !important; }
+.menu :deep(.el-menu-item:nth-child(4).is-active)::before { background: linear-gradient(180deg, #8b5cf6, #a78bfa); }
+.menu :deep(.el-menu-item:nth-child(5).is-active) { color: #ec4899 !important; }
+.menu :deep(.el-menu-item:nth-child(5).is-active)::before { background: linear-gradient(180deg, #ec4899, #f472b6); }
+.menu :deep(.el-menu-item:nth-child(6).is-active) { color: #6366f1 !important; }
+.menu :deep(.el-menu-item:nth-child(6).is-active)::before { background: linear-gradient(180deg, #6366f1, #818cf8); }
 
 /* Footer */
 .sidebar-footer { padding: 14px 16px; border-top: 1px solid #f0f2f5; }
@@ -232,6 +274,12 @@ function logout() {
   border: 1px solid #e4e7ed; transition: all 0.2s;
 }
 .action-btn:hover { color: #409EFF; border-color: #409EFF; background: #f0f7ff; }
+.theme-toggle {
+  display: flex; align-items: center; padding: 6px 10px;
+  background: none; border: 1px solid transparent; border-radius: 6px;
+  color: #909399; cursor: pointer; transition: all 0.2s;
+}
+.theme-toggle:hover { color: #f59e0b; border-color: #fef3c7; background: #fffbeb; }
 .logout-btn {
   display: flex; align-items: center; padding: 6px 10px;
   background: none; border: 1px solid transparent; border-radius: 6px;

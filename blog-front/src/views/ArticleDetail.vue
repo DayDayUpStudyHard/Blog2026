@@ -1,6 +1,14 @@
 <template>
   <n-spin :show="loading">
     <article v-if="article" class="article-detail">
+      <div class="cover-hero" v-if="article.cover" ref="coverHeroRef">
+        <div class="cover-img" :style="{ backgroundImage: `url(${article.cover})`, transform: `translateY(${parallaxY}px)` }"></div>
+        <div class="cover-overlay"></div>
+      </div>
+      <div class="cover-hero gradient-hero" v-else>
+        <div class="gradient-bg"></div>
+      </div>
+
       <div class="article-header">
         <div class="header-top">
           <span v-if="article.isTop" class="top-badge">置顶</span>
@@ -62,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getArticleDetail, getArticleNav, getComments } from '../api/index.js'
 import CommentList from '../components/CommentList.vue'
@@ -88,6 +96,8 @@ const comments = ref([])
 const commentTotal = ref(0)
 const prevArticle = ref(null)
 const nextArticle = ref(null)
+const coverHeroRef = ref(null)
+const parallaxY = ref(0)
 
 const readingTime = computed(() => {
   const text = article.value?.content || ''
@@ -96,7 +106,16 @@ const readingTime = computed(() => {
   return `约 ${minutes} 分钟`
 })
 
-onMounted(() => { fetchArticle(); fetchComments() })
+function onParallax() {
+  parallaxY.value = window.scrollY * 0.35
+}
+onMounted(() => {
+  fetchArticle(); fetchComments()
+  window.addEventListener('scroll', onParallax, { passive: true })
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', onParallax)
+})
 
 watch(() => route.params.id, () => {
   fetchArticle()
@@ -131,6 +150,33 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 
 <style scoped>
 .article-detail { padding: 24px 0; }
+
+/* Cover Hero */
+.cover-hero {
+  width: 100%; height: 340px; border-radius: 16px; overflow: hidden;
+  position: relative; margin-bottom: 28px;
+}
+.cover-img {
+  width: 100%; height: 120%;
+  background-size: cover; background-position: center;
+  will-change: transform;
+}
+.cover-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.35) 100%);
+}
+
+.gradient-hero {
+  height: 200px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  position: relative;
+}
+.gradient-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 50%);
+}
 
 .article-header { text-align: center; padding: 20px 0 16px; }
 .header-top { margin-bottom: 10px; }

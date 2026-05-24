@@ -67,11 +67,25 @@ async function doLogin() {
 <style scoped>
 .login-page {
   height: 100vh; display: flex; justify-content: center; align-items: center;
+  perspective: 1000px;
 }
 
 .login-card {
   width: 400px;
+  animation: cardEnter 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .card-inner {
   background: rgba(255,255,255,0.75);
   backdrop-filter: blur(20px);
@@ -80,6 +94,10 @@ async function doLogin() {
   border-radius: 18px;
   padding: 48px 40px 40px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08);
+  transition: box-shadow 0.3s;
+}
+.card-inner:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.06), 0 16px 56px rgba(0,0,0,0.12);
 }
 
 /* Logo */
@@ -87,22 +105,56 @@ async function doLogin() {
   text-align: center;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   margin-bottom: 8px;
+  animation: logoReveal 0.6s ease both;
+  animation-delay: 0.3s;
 }
+
+@keyframes logoReveal {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .logo-icon {
   width: 36px; height: 36px; border-radius: 10px;
   background: linear-gradient(135deg, #409EFF, #66b1ff); color: #fff;
   font-size: 18px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
+  animation: iconPulse 2s ease-in-out infinite;
+  animation-delay: 1s;
 }
+
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(64,158,255,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(64,158,255,0); }
+}
+
 .logo-text { font-size: 22px; font-weight: 700; color: #303133; }
 
 .subtitle {
   text-align: center; color: #909399; font-size: 13px;
   margin-bottom: 36px;
+  animation: fadeText 0.5s ease both;
+  animation-delay: 0.5s;
+}
+
+@keyframes fadeText {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Form */
-.login-form :deep(.el-form-item) { margin-bottom: 20px; }
+.login-form :deep(.el-form-item) {
+  margin-bottom: 20px;
+  animation: fieldSlideIn 0.5s ease both;
+}
+.login-form :deep(.el-form-item:nth-child(1)) { animation-delay: 0.55s; }
+.login-form :deep(.el-form-item:nth-child(2)) { animation-delay: 0.65s; }
+.login-form :deep(.el-form-item:nth-child(3)) { animation-delay: 0.75s; }
+
+@keyframes fieldSlideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 
 .login-btn {
   width: 100%; height: 44px !important;
@@ -116,4 +168,25 @@ async function doLogin() {
   box-shadow: 0 6px 20px rgba(64,158,255,0.35);
   transform: translateY(-1px);
 }
+
+/* Typewriter effect for title */
+.logo-text {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing 1s steps(8, end);
+}
+
+@keyframes typing {
+  from { max-width: 0; }
+  to { max-width: 200px; }
+}
+
+/* Dark mode */
+[data-theme="dark"] .login-page { background: transparent; }
+[data-theme="dark"] .card-inner {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .logo-text { color: #e2e8f0; }
+[data-theme="dark"] .subtitle { color: #94a3b8; }
 </style>

@@ -97,22 +97,55 @@ onMounted(async () => {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 14px; padding: 24px 28px;
+  border-radius: 14px; padding: 28px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 1px 3px rgba(0,0,0,0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative; overflow: hidden;
 }
+/* Top gradient bar */
+.stat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 14px 14px 0 0;
+}
+.stat-card:nth-child(1)::before { background: linear-gradient(90deg, #409EFF, #66b1ff); }
+.stat-card:nth-child(2)::before { background: linear-gradient(90deg, #10b981, #34d399); }
+.stat-card:nth-child(3)::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+/* Grid texture overlay */
+.stat-card::after {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(64,158,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(64,158,255,0.02) 1px, transparent 1px);
+  background-size: 20px 20px;
+  -webkit-mask-image: radial-gradient(circle at 30% 20%, black 40%, transparent 70%);
+  mask-image: radial-gradient(circle at 30% 20%, black 40%, transparent 70%);
+}
+
 .stat-card:hover {
-  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   transform: translateY(-4px);
 }
 
 .stat-icon {
-  width: 52px; height: 52px; border-radius: 12px;
+  width: 56px; height: 56px; border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.3s;
+  position: relative; z-index: 1;
+}
+.stat-card:hover .stat-icon {
+  transform: scale(1.08);
 }
 
-.stat-body { display: flex; flex-direction: column; }
-.num { font-size: 32px; font-weight: 700; line-height: 1.1; }
-.label { margin-top: 2px; color: #909399; font-size: 13px; }
+.stat-body { display: flex; flex-direction: column; position: relative; z-index: 1; }
+.num {
+  font-size: 36px; font-weight: 800; line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+.label { margin-top: 4px; color: #909399; font-size: 13px; font-weight: 500; }
 </style>
