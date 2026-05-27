@@ -6,6 +6,11 @@ import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerIntercept
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * MyBatis-Plus 插件配置，注册分页拦截器。
+ * <p>
+ * 不配置此拦截器则 {@code Page} 查询退化回普通查询，不分页也不返回 total。
+ */
 @Configuration
 public class MyBatisPlusConfig {
 

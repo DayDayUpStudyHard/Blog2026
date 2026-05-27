@@ -12,6 +12,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 标签服务实现。
+ * <p>
+ * 删除标签时先删除 {@code t_article_tag} 关联数据，再删标签。
+ * {@code getByArticleId} 通过关联表查出标签 ID 集合，再批量查询标签实体。
+ */
 @Service
 public class TagServiceImpl implements TagService {
 

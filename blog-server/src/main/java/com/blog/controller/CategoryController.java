@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 前台分类接口（公开）：返回所有分类列表。
+ */
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {

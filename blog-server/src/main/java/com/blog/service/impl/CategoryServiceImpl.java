@@ -8,6 +8,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 分类服务实现。
+ * <p>
+ * 列表按 sort 升序排列；更新时只更新非 null 字段，null 字段保持原值。
+ */
 @Service
 public class CategoryServiceImpl implements CategoryService {
 

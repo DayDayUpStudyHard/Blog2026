@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 前台标签接口（公开）：返回所有标签列表。
+ */
 @RestController
 @RequestMapping("/api/tags")
 public class TagController {

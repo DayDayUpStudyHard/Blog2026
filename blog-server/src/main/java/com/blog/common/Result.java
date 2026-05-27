@@ -2,6 +2,12 @@ package com.blog.common;
 
 import lombok.Data;
 
+/**
+ * 统一响应体，所有 Controller 均通过此类返回 JSON。
+ * <p>
+ * 提供静态工厂方法 {@link #ok} / {@link #fail} 快速构建成功/失败响应。
+ * 泛型 {@code T} 为实际返回数据类型。
+ */
 @Data
 public class Result<T> {
     private int code;

@@ -10,6 +10,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * 本地文件存储实现，默认生效。
+ * <p>
+ * 文件保存至配置的 {@code blog.upload-path} 目录（默认 {@code upload/}），
+ * 返回相对路径 {@code /upload/xxx.ext}，由 {@code WebConfig} 映射为静态资源。
+ * 文件名使用 UUID 避免冲突。
+ */
 @Service
 @ConditionalOnProperty(name = "blog.storage.type", havingValue = "local", matchIfMissing = true)
 public class LocalFileStorageService implements FileStorageService {

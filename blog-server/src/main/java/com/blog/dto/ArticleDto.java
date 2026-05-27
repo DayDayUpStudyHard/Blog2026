@@ -4,6 +4,12 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import java.util.List;
 
+/**
+ * 文章创建/编辑 DTO。
+ * <p>
+ * {@code tagIds} 为关联标签 ID 列表，后端在 {@code ArticleServiceImpl} 中维护
+ * {@code t_article_tag} 中间表。
+ */
 @Data
 public class ArticleDto {
     @NotBlank(message = "标题不能为空")

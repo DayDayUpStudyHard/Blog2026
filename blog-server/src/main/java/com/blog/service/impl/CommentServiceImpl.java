@@ -9,6 +9,12 @@ import com.blog.service.CommentService;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
+/**
+ * 评论服务实现。
+ * <p>
+ * 前台查询只返回 status=1 的评论；新评论默认 status=1（直接展示）。
+ * 后台可修改 status 实现审核/标记垃圾。
+ */
 @Service
 public class CommentServiceImpl implements CommentService {
 

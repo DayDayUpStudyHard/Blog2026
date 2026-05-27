@@ -7,6 +7,12 @@ import com.blog.mapper.UserMapper;
 import com.blog.service.UserService;
 import org.springframework.stereotype.Service;
 
+/**
+ * 用户服务实现。
+ * <p>
+ * 密码使用 Hutool BCrypt 哈希，登录时校验哈希匹配。
+ * {@code getById} 自动置空密码字段防止泄露。
+ */
 @Service
 public class UserServiceImpl implements UserService {
 

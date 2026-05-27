@@ -8,6 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * 文件上传接口（需登录态，由 SaToken 拦截器保护）。
+ * 根据配置选择本地存储或 S3 兼容存储，返回文件访问 URL。
+ */
 @RestController
 @RequestMapping("/api/upload")
 public class UploadController {

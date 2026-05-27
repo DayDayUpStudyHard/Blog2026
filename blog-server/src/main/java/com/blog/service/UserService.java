@@ -2,6 +2,9 @@ package com.blog.service;
 
 import com.blog.entity.User;
 
+/**
+ * 用户服务接口。
+ */
 public interface UserService {
     User login(String username, String password);
     User getById(Long id);

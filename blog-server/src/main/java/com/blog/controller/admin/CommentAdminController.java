@@ -7,6 +7,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 后台评论管理（需登录）：评论列表审核、删除。
+ * <p>
+ * 评论状态通常为 0(待审)/1(通过)/2(垃圾)，通过 {@code PUT /{id}/status} 切换。
+ */
 @RestController
 @RequestMapping("/api/admin/comments")
 public class CommentAdminController {

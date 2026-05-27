@@ -12,6 +12,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 前台文章接口（无需登录）：文章列表、详情、上下篇导航。
+ * <p>
+ * 列表仅返回已发布(status=1)的文章；详情页会自增阅读量。
+ * 列表接口返回 {@code content} 字段为空以减少传输量，详情接口返回完整内容。
+ */
 @RestController
 @RequestMapping("/api/articles")
 public class ArticleController {

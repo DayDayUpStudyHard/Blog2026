@@ -6,6 +6,12 @@ import com.blog.entity.Article;
 
 import java.util.Map;
 
+/**
+ * 文章服务接口。
+ * <p>
+ * 前台方法（{@code getPublishedList / getDetail / getNav}）仅操作已发布文章；
+ * 后台方法（{@code getAdminList / create / update / delete}）需登录态调用。
+ */
 public interface ArticleService {
     Page<Article> getPublishedList(int page, int size, Long categoryId, String keyword);
     Article getDetail(Long id);

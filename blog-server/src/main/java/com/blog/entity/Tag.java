@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+/**
+ * 标签实体，映射 {@code t_tag} 表。
+ */
 @Data
 @TableName("t_tag")
 public class Tag {

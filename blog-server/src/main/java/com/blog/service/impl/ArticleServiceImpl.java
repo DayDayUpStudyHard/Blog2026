@@ -14,6 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+/**
+ * 文章服务实现。
+ * <p>
+ * 重点：
+ * <ul>
+ *   <li>{@code getPublishedList} 置空 content 字段减少传输量；先按置顶降序再按时间降序</li>
+ *   <li>{@code getDetail} 自增阅读量后更新数据库</li>
+ *   <li>{@code getNav} 按时间查找上一篇/下一篇已发布文章</li>
+ *   <li>{@code create/update} 通过 {@code ArticleTagMapper} 维护文章-标签关联，使用
+ *       {@code @Transactional} 保证原子性；更新时先删后插</li>
+ * </ul>
+ */
 @Service
 public class ArticleServiceImpl implements ArticleService {
 

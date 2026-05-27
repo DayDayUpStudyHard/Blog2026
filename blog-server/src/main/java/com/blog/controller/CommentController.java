@@ -10,6 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 前台评论接口（公开）：获取某篇文章的评论列表、发表评论。
+ * <p>
+ * 新评论默认 status=1（直接展示），可在后台标记为待审核。
+ */
 @RestController
 @RequestMapping("/api/articles/{articleId}/comments")
 public class CommentController {

@@ -1,8 +1,16 @@
 package com.blog.config;
 
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * 文件存储配置，映射 {@code blog.storage.*} 到本类。
+ * <p>
+ * 通过 {@code blog.storage.type} 决定使用本地存储还是 S3 兼容存储。
+ * S3Config 内所有字段根据所选对象存储服务商配置（Cloudflare R2 / AWS S3 / MinIO 等）。
+ */
+@Data
 @Configuration
 @ConfigurationProperties(prefix = "blog.storage")
 public class FileStorageConfig {
@@ -11,11 +19,7 @@ public class FileStorageConfig {
 
     private S3Config s3 = new S3Config();
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    public S3Config getS3() { return s3; }
-    public void setS3(S3Config s3) { this.s3 = s3; }
-
+    @Data
     public static class S3Config {
         private String endpoint;
         private String region = "auto";
@@ -23,18 +27,5 @@ public class FileStorageConfig {
         private String secretKey;
         private String bucket;
         private String publicUrl;
-
-        public String getEndpoint() { return endpoint; }
-        public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
-        public String getRegion() { return region; }
-        public void setRegion(String region) { this.region = region; }
-        public String getAccessKey() { return accessKey; }
-        public void setAccessKey(String accessKey) { this.accessKey = accessKey; }
-        public String getSecretKey() { return secretKey; }
-        public void setSecretKey(String secretKey) { this.secretKey = secretKey; }
-        public String getBucket() { return bucket; }
-        public void setBucket(String bucket) { this.bucket = bucket; }
-        public String getPublicUrl() { return publicUrl; }
-        public void setPublicUrl(String publicUrl) { this.publicUrl = publicUrl; }
     }
 }

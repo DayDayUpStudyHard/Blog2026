@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 后台文章管理（需登录）：CRUD 文章。
+ * <p>
+ * 重点：创建/更新文章时同步维护 {@code t_article_tag} 关联表；
+ * 删除时同时清理关联数据，保持数据一致性。事务由 {@code ArticleServiceImpl} 管理。
+ */
 @RestController
 @RequestMapping("/api/admin/articles")
 public class ArticleAdminController {

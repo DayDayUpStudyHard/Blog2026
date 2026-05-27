@@ -16,6 +16,12 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.IOException;
 import java.net.URI;
 
+/**
+ * S3 兼容文件存储实现（Cloudflare R2 / AWS S3 / MinIO 等）。
+ * <p>
+ * 通过 {@code blog.storage.type=s3} 激活，S3Client 在构造时创建，
+ * 存储路径为 {@code blog/<uuid>.<ext>}，返回公开访问 URL。
+ */
 @Service
 @ConditionalOnProperty(name = "blog.storage.type", havingValue = "s3")
 public class S3FileStorageService implements FileStorageService {
