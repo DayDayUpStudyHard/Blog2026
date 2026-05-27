@@ -4,6 +4,40 @@
 
 ---
 
+## blog-server — Lombok 优化：@RequiredArgsConstructor 替换显式构造器
+
+**日期**：2026-05-27
+
+### 改动
+
+16 个 Controller/Service/Config 类的手写构造器替换为 `@RequiredArgsConstructor` 自动生成，净减少 37 行。
+
+- 所有 `private final` 字段自动注入，无需手动 `this.x = x`
+- `S3FileStorageService` 保留显式构造器（含 S3Client 初始化逻辑，非简单赋值型）
+
+| 文件 | 改动 |
+|------|------|
+| 10 个 Controller | `@RequiredArgsConstructor` + 移除构造器 |
+| 5 个 ServiceImpl | 同上 |
+| `DataInitializer.java` | 同上 |
+
+---
+
+## blog-server — 全部 Java 文件添加类级 Javadoc 注释
+
+**日期**：2026-05-27
+
+### 改动
+
+49 个 Java 文件补充类级 Javadoc，说明文件用途及值得注意的重点：
+
+- **config**：Redis 序列化策略、CORS 注意点、Sa-Token 拦截路径、分页插件必要性、启动初始化密码硬编码风险
+- **controller**：前台/后台职责区分、权限拦截、数据裁剪原因
+- **entity**：逻辑删除 `@TableLogic`、非数据库字段 `exist=false`、自动填充策略
+- **service**：事务边界 `@Transactional`、条件装配 `@ConditionalOnProperty`、密码安全
+
+---
+
 ## 智能旅行助手 — LLM 跨天重复景点 + 降级补位
 
 **日期**：2026-05-27
