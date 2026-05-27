@@ -19,6 +19,7 @@ class Attraction(BaseModel):
     rating: Optional[float] = Field(default=None, ge=0, le=5, description="评分")
     image_url: Optional[str] = Field(default=None, description="图片URL")
     ticket_price: int = Field(default=0, ge=0, description="门票价格(元)")
+    is_substitute: bool = Field(default=False, description="是否为替补景点")
 
 
 class Meal(BaseModel):

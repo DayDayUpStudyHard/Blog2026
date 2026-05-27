@@ -144,4 +144,45 @@ PLANNER_AGENT_PROMPT = """你是一个行程规划专家。请根据以下信息
 5. 预算要合理估算
 6. 经纬度必须是数字类型
 7. 温度为纯数字
+8. 跨天不可重复景点，每天景点必须不同
+"""
+
+PLANNER_AGENT_PROMPT_COMPACT = """你是一个行程规划专家。请生成简洁紧凑的旅行计划。
+
+**严格按以下JSON格式返回(不要markdown代码块，减少空格换行):**
+{
+  "city": "城市",
+  "start_date": "YYYY-MM-DD",
+  "end_date": "YYYY-MM-DD",
+  "days": [
+    {
+      "date": "YYYY-MM-DD",
+      "day_index": 0,
+      "description": "简短概述(10字以内)",
+      "transportation": "交通方式",
+      "accommodation": "住宿类型",
+      "hotel": {"name":"酒店名","address":"地址","longitude":0,"latitude":0,"price_range":"","rating":"","distance":"","type":"","estimated_cost":0},
+      "attractions": [
+        {"name":"景点","address":"地址","longitude":0,"latitude":0,"visit_duration":120,"description":"简述(15字内)","ticket_price":0}
+      ],
+      "meals": [
+        {"type":"lunch","name":"餐名","estimated_cost":0},
+        {"type":"dinner","name":"餐名","estimated_cost":0}
+      ]
+    }
+  ],
+  "weather_info": [{"date":"","day_weather":"","night_weather":"","day_temp":0,"night_temp":0,"wind_direction":"","wind_power":""}],
+  "overall_suggestions": "简要建议(50字以内)",
+  "budget": {"total_attractions":0,"total_hotels":0,"total_meals":0,"total_transportation":0,"total":0}
+}
+
+**严格规则:**
+1. 每天只安排2个景点(上午、下午各一)，合理排布路线
+2. 每天只安排午餐和晚餐(早餐忽略)
+3. 每个景点description不超过15个汉字
+4. 行程描述description不超过10个汉字
+5. 经纬度必须为数字，缺失填0
+6. 温度为纯数字
+7. 输出尽量紧凑，减少不必要的空格换行
+8. 跨天不可重复景点，所有天景点各不相同
 """

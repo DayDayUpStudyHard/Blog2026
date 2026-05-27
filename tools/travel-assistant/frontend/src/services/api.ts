@@ -3,7 +3,7 @@ import type { TripPlanRequest, TripPlan } from '../types'
 
 const api = axios.create({
   baseURL: 'http://localhost:8001/api',
-  timeout: 180000,
+  timeout: 600000,
   headers: { 'Content-Type': 'application/json' },
 })
 

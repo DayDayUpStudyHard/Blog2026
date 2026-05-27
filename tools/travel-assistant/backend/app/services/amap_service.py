@@ -8,13 +8,13 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://restapi.amap.com/v3"
 
 
-def search_poi(keywords: str, city: str, types: str = "") -> List[Dict[str, Any]]:
+def search_poi(keywords: str, city: str, types: str = "", offset: int = 10) -> List[Dict[str, Any]]:
     """搜索POI（景点、酒店、餐厅等）"""
     params = {
         "key": settings.amap_api_key,
         "keywords": keywords,
         "city": city,
-        "offset": 10,
+        "offset": offset,
         "output": "json",
     }
     if types:

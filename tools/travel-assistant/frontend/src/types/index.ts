@@ -6,22 +6,21 @@ export interface Location {
 export interface Attraction {
   name: string
   address: string
-  longitude: number
-  latitude: number
+  location: Location
   visit_duration: number
   description: string
   category?: string
   rating?: number
   image_url?: string
   ticket_price: number
+  is_substitute?: boolean
 }
 
 export interface Meal {
   type: string
   name: string
   address?: string
-  longitude?: number
-  latitude?: number
+  location?: Location
   description?: string
   estimated_cost: number
 }
@@ -29,8 +28,7 @@ export interface Meal {
 export interface Hotel {
   name: string
   address: string
-  longitude: number
-  latitude: number
+  location?: Location
   price_range: string
   rating: string
   distance: string

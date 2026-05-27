@@ -2,7 +2,7 @@
   <div class="result-layout" v-if="tripPlan">
     <!-- Sidebar -->
     <aside class="result-sidebar">
-      <a-menu v-model:selectedKeys="[activeSection]" mode="inline" @click="scrollToSection">
+      <a-menu v-model:selectedKeys="selectedKeys" mode="inline" @click="scrollToSection">
         <a-menu-item key="overview">📋 行程概览</a-menu-item>
         <a-menu-item key="budget" v-if="tripPlan.budget">💰 预算明细</a-menu-item>
         <a-menu-item key="days">📅 每日行程</a-menu-item>
@@ -14,7 +14,7 @@
         <a-button block @click="toggleEditMode" :type="editMode ? 'dashed' : 'default'">
           {{ editMode ? '💾 保存修改' : '✏️ 编辑行程' }}
         </a-button>
-        <a-dropdown style="margin-top: 8px; width: 100%">
+        <a-dropdown placement="top" style="margin-top: 8px; width: 100%">
           <a-button block>📥 导出</a-button>
           <template #overlay>
             <a-menu>
@@ -85,9 +85,12 @@
           <a-divider>🏛️ 景点</a-divider>
           <div v-for="(att, ai) in day.attractions" :key="ai" class="attraction-row">
             <div class="attraction-info">
-              <span class="attraction-index">{{ ai + 1 }}</span>
+              <span class="attraction-index" :class="{ substitute: att.is_substitute }">{{ ai + 1 }}</span>
               <div>
-                <strong>{{ att.name }}</strong>
+                <strong>
+                  {{ att.name }}
+                  <a-tag v-if="att.is_substitute" color="orange" size="small">备选</a-tag>
+                </strong>
                 <p class="attraction-detail">{{ att.description }} | 建议游览 {{ att.visit_duration }} 分钟 | 门票 ¥{{ att.ticket_price }}</p>
                 <p class="attraction-addr">{{ att.address }}</p>
               </div>
@@ -139,6 +142,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { TripPlan } from '../types'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 const router = useRouter()
 const tripPlan = ref<TripPlan | null>(null)
@@ -146,10 +151,19 @@ const editMode = ref(false)
 const activeSection = ref('overview')
 const originalPlan = ref<TripPlan | null>(null)
 
+const selectedKeys = computed({
+  get: () => [activeSection.value],
+  set: (val: string[]) => { if (val.length) activeSection.value = val[0] }
+})
+
 onMounted(() => {
-  const state = history.state as any
-  if (state?.tripPlan) {
-    tripPlan.value = state.tripPlan
+  const raw = sessionStorage.getItem('tripPlan')
+  if (raw) {
+    try {
+      tripPlan.value = JSON.parse(raw)
+    } catch {
+      message.error('数据解析失败，请重新规划')
+    }
   }
 })
 
@@ -199,11 +213,58 @@ function deleteAttraction(dayIdx: number, attIdx: number) {
 }
 
 async function exportAsImage() {
-  message.info('导出功能需要 html2canvas 库支持，请安装依赖后使用')
+  const el = document.getElementById('trip-plan-content')
+  if (!el) { message.error('未找到行程内容'); return }
+  message.loading({ content: '正在生成图片...', key: 'export' })
+  try {
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    })
+    const link = document.createElement('a')
+    link.download = `旅行计划_${tripPlan.value?.city || '行程'}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+    message.success({ content: '图片已下载', key: 'export' })
+  } catch {
+    message.error({ content: '图片导出失败', key: 'export' })
+  }
 }
 
 async function exportAsPDF() {
-  message.info('导出功能需要 jspdf 库支持，请安装依赖后使用')
+  const el = document.getElementById('trip-plan-content')
+  if (!el) { message.error('未找到行程内容'); return }
+  message.loading({ content: '正在生成 PDF...', key: 'export' })
+  try {
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    })
+    const imgData = canvas.toDataURL('image/png')
+    const imgWidth = 210 // A4 width in mm
+    const pageHeight = 297 // A4 height in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+    const pdf = new jsPDF('p', 'mm', 'a4')
+
+    let heightLeft = imgHeight
+    let position = 0
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+    heightLeft -= pageHeight
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+    }
+    pdf.save(`旅行计划_${tripPlan.value?.city || '行程'}.pdf`)
+    message.success({ content: 'PDF 已下载', key: 'export' })
+  } catch {
+    message.error({ content: 'PDF 导出失败', key: 'export' })
+  }
 }
 </script>
 
@@ -237,6 +298,7 @@ async function exportAsPDF() {
   background: #409EFF; color: #fff; display: flex; align-items: center;
   justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; margin-top: 2px;
 }
+.attraction-index.substitute { background: #e6a23c; }
 .attraction-detail { font-size: 12px; color: #909399; margin: 2px 0; }
 .attraction-addr { font-size: 12px; color: #c0c4cc; }
 .attraction-actions { display: flex; gap: 4px; flex-shrink: 0; }

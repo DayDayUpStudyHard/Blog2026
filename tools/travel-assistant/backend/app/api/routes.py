@@ -54,3 +54,8 @@ async def create_trip_plan(request: TripPlanRequest) -> TripPlan:
 @router.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+@router.post("/ping")
+async def ping():
+    """Fast test endpoint to verify CORS + connectivity"""
+    return {"status": "ok", "message": "Backend is reachable"}

@@ -17,6 +17,7 @@
             </router-view>
           </main>
           <AppFooter />
+          <ToolsWidget />
         </div>
         <button class="theme-toggle" @click="toggleTheme" :title="themeLabel">
           <svg v-if="currentTheme === 'light'" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -31,6 +32,7 @@
 import { ref, computed, onMounted } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
+import ToolsWidget from './components/ToolsWidget.vue'
 
 const currentTheme = ref(localStorage.getItem('blog-theme') || 'light')
 const themeLabel = computed(() => currentTheme.value === 'light' ? '切换暗色模式' : '切换亮色模式')

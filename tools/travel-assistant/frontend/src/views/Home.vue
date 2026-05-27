@@ -22,13 +22,17 @@
 
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="开始日期" :rules="[{ required: true }]">
-              <a-date-picker v-model:value="startDate" size="large" style="width: 100%" />
+            <a-form-item label="开始日期" :rules="[{ required: true, message: '请选择开始日期' }]">
+              <a-date-picker
+                v-model:value="startDate"
+                size="large" style="width: 100%"
+                :disabled-date="disabledDate"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="结束日期" :rules="[{ required: true }]">
-              <a-date-picker v-model:value="endDate" size="large" style="width: 100%" />
+            <a-form-item label="结束日期">
+              <a-input :value="endDateDisplay" size="large" disabled style="width: 100%" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -36,7 +40,7 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="旅行偏好">
-              <a-select v-model:value="formData.preferences" size="large">
+              <a-select v-model:value="selectedPreferences" mode="multiple" size="large" placeholder="可多选">
                 <a-select-option value="历史文化">历史文化</a-select-option>
                 <a-select-option value="自然风光">自然风光</a-select-option>
                 <a-select-option value="美食之旅">美食之旅</a-select-option>
@@ -90,13 +94,26 @@
           <a-progress :percent="loadingProgress" status="active" />
           <p class="progress-status">{{ loadingStatus }}</p>
         </div>
+
+        <div v-if="lastError" class="error-section">
+          <a-alert type="error" :message="lastError" closable @close="lastError = ''" />
+        </div>
       </a-form>
+    </a-card>
+
+    <a-card class="form-card" style="margin-top: 16px">
+      <a-button size="small" @click="testConnection" :loading="testing">
+        {{ testing ? '测试中...' : '🔗 测试后端连接' }}
+      </a-button>
+      <span v-if="testResult" style="margin-left: 12px; font-size: 13px" :style="{ color: testResult.ok ? '#67c23a' : '#f56c6c' }">
+        {{ testResult.text }}
+      </span>
     </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { generateTripPlan } from '../services/api'
@@ -107,45 +124,50 @@ const router = useRouter()
 const loading = ref(false)
 const loadingProgress = ref(0)
 const loadingStatus = ref('')
+const lastError = ref('')
+const testing = ref(false)
+const testResult = ref<{ ok: boolean; text: string } | null>(null)
 
 const formData = reactive<TripPlanRequest>({
   city: '',
   start_date: '',
   end_date: '',
   days: 3,
-  preferences: '历史文化',
+  preferences: '',
   budget: '中等',
   transportation: '公共交通',
   accommodation: '经济型酒店',
 })
 
+const selectedPreferences = ref<string[]>(['历史文化'])
 const startDate = ref<dayjs.Dayjs | null>(null)
-const endDate = ref<dayjs.Dayjs | null>(null)
 
-watch(startDate, (val) => {
-  if (val) {
-    formData.start_date = val.format('YYYY-MM-DD')
-    if (endDate.value) {
-      const diff = endDate.value.diff(val, 'day') + 1
-      if (diff > 0) formData.days = diff
-    }
-  }
+const endDateDisplay = computed(() => {
+  if (!startDate.value) return ''
+  const end = startDate.value.add(formData.days - 1, 'day')
+  return end.format('YYYY-MM-DD')
 })
 
-watch(endDate, (val) => {
-  if (val) {
-    formData.end_date = val.format('YYYY-MM-DD')
-    if (startDate.value) {
-      const diff = val.diff(startDate.value, 'day') + 1
-      if (diff > 0) formData.days = diff
-    }
+function disabledDate(current: dayjs.Dayjs) {
+  return current && current.isBefore(dayjs(), 'day')
+}
+
+function syncDates() {
+  if (startDate.value) {
+    formData.start_date = startDate.value.format('YYYY-MM-DD')
+    formData.end_date = startDate.value.add(formData.days - 1, 'day').format('YYYY-MM-DD')
   }
-})
+}
+
+watch(startDate, () => syncDates())
+watch(() => formData.days, () => { if (formData.days > 0) syncDates() })
 
 async function handleSubmit() {
   if (!formData.city) { message.error('请输入目的地城市'); return }
   if (!formData.start_date) { message.error('请选择开始日期'); return }
-  if (!formData.end_date) { message.error('请选择结束日期'); return }
+  if (selectedPreferences.value.length === 0) { message.error('请至少选择一个旅行偏好'); return }
+
+  formData.preferences = selectedPreferences.value.join('、')
 
   loading.value = true
   loadingProgress.value = 0
@@ -166,14 +188,38 @@ async function handleSubmit() {
     clearInterval(progressInterval)
     loadingProgress.value = 100
     loadingStatus.value = '✅ 完成！'
+    sessionStorage.setItem('tripPlan', JSON.stringify(response))
     setTimeout(() => {
-      router.push({ name: 'Result', state: { tripPlan: response } })
+      router.push({ name: 'Result' })
     }, 400)
-  } catch (error) {
+  } catch (error: any) {
     clearInterval(progressInterval)
-    message.error('生成计划失败，请检查 API 配置后重试')
+    const detail = error?.response?.data?.detail || error?.message || error?.toString() || '未知错误'
+    lastError.value = '生成计划失败: ' + detail
+    message.error(lastError.value)
   } finally {
     loading.value = false
+  }
+}
+
+async function testConnection() {
+  testing.value = true
+  testResult.value = null
+  try {
+    const resp = await fetch('http://localhost:8001/api/ping', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (resp.ok) {
+      const data = await resp.json()
+      testResult.value = { ok: true, text: `连接成功 (${data.message})` }
+    } else {
+      testResult.value = { ok: false, text: `HTTP ${resp.status}: ${await resp.text()}` }
+    }
+  } catch (e: any) {
+    testResult.value = { ok: false, text: `连接失败: ${e.message}` }
+  } finally {
+    testing.value = false
   }
 }
 </script>
@@ -193,4 +239,5 @@ async function handleSubmit() {
 
 .progress-section { margin-top: 16px; text-align: center; }
 .progress-status { margin-top: 8px; color: #606266; font-size: 13px; }
+.error-section { margin-top: 16px; }
 </style>
