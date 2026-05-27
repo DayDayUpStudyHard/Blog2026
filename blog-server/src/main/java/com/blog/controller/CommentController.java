@@ -5,6 +5,7 @@ import com.blog.dto.CommentDto;
 import com.blog.entity.Comment;
 import com.blog.service.CommentService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -16,14 +17,11 @@ import java.util.Map;
  * 新评论默认 status=1（直接展示），可在后台标记为待审核。
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/articles/{articleId}/comments")
 public class CommentController {
 
     private final CommentService commentService;
-
-    public CommentController(CommentService commentService) {
-        this.commentService = commentService;
-    }
 
     @GetMapping
     public Result<Map<String, Object>> list(

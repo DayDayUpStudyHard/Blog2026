@@ -6,6 +6,7 @@ import com.blog.entity.Article;
 import com.blog.service.ArticleService;
 import com.blog.service.TagService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,16 +19,12 @@ import java.util.Map;
  * 删除时同时清理关联数据，保持数据一致性。事务由 {@code ArticleServiceImpl} 管理。
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/admin/articles")
 public class ArticleAdminController {
 
     private final ArticleService articleService;
     private final TagService tagService;
-
-    public ArticleAdminController(ArticleService articleService, TagService tagService) {
-        this.articleService = articleService;
-        this.tagService = tagService;
-    }
 
     @GetMapping
     public Result<Map<String, Object>> list(

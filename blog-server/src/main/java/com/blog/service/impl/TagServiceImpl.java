@@ -6,6 +6,7 @@ import com.blog.entity.Tag;
 import com.blog.mapper.ArticleTagMapper;
 import com.blog.mapper.TagMapper;
 import com.blog.service.TagService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,15 +20,11 @@ import java.util.stream.Collectors;
  * {@code getByArticleId} 通过关联表查出标签 ID 集合，再批量查询标签实体。
  */
 @Service
+@RequiredArgsConstructor
 public class TagServiceImpl implements TagService {
 
     private final TagMapper tagMapper;
     private final ArticleTagMapper articleTagMapper;
-
-    public TagServiceImpl(TagMapper tagMapper, ArticleTagMapper articleTagMapper) {
-        this.tagMapper = tagMapper;
-        this.articleTagMapper = articleTagMapper;
-    }
 
     @Override
     public List<Tag> list() {

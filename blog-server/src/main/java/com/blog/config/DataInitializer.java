@@ -4,6 +4,7 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.blog.entity.User;
 import com.blog.mapper.UserMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -14,13 +15,10 @@ import org.springframework.stereotype.Component;
  * 不存在则创建（密码使用 BCrypt 哈希）。密码硬编码仅用于开发阶段，生产应从环境变量或配置中心注入。
  */
 @Component
+@RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
     private final UserMapper userMapper;
-
-    public DataInitializer(UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
 
     @Override
     public void run(String... args) {

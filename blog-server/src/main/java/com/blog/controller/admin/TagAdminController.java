@@ -3,6 +3,7 @@ package com.blog.controller.admin;
 import com.blog.common.Result;
 import com.blog.entity.Tag;
 import com.blog.service.TagService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -11,14 +12,11 @@ import org.springframework.web.bind.annotation.*;
  * 注意：更新时手动将路径参数 id 设入 Tag 对象，确保 MyBatis-Plus 按 id 更新。
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/admin/tags")
 public class TagAdminController {
 
     private final TagService tagService;
-
-    public TagAdminController(TagService tagService) {
-        this.tagService = tagService;
-    }
 
     @PostMapping
     public Result<Tag> create(@RequestBody Tag tag) {

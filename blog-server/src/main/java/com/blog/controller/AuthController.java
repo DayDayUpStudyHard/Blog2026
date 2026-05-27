@@ -7,6 +7,7 @@ import com.blog.dto.PasswordDto;
 import com.blog.entity.User;
 import com.blog.service.UserService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,14 +21,11 @@ import java.util.Map;
  * 密码使用 BCrypt 加密，注册流程未开放（管理员由 DataInitializer 初始化）。
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserService userService;
-
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
 
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@Valid @RequestBody LoginDto dto) {

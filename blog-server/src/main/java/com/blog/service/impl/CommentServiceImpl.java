@@ -6,6 +6,7 @@ import com.blog.dto.CommentDto;
 import com.blog.entity.Comment;
 import com.blog.mapper.CommentMapper;
 import com.blog.service.CommentService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
@@ -16,13 +17,10 @@ import java.time.LocalDateTime;
  * 后台可修改 status 实现审核/标记垃圾。
  */
 @Service
+@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
     private final CommentMapper commentMapper;
-
-    public CommentServiceImpl(CommentMapper commentMapper) {
-        this.commentMapper = commentMapper;
-    }
 
     @Override
     public Page<Comment> getByArticleId(Long articleId, int page, int size) {

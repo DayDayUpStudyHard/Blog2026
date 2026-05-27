@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.blog.entity.Category;
 import com.blog.mapper.CategoryMapper;
 import com.blog.service.CategoryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,13 +15,10 @@ import java.util.List;
  * 列表按 sort 升序排列；更新时只更新非 null 字段，null 字段保持原值。
  */
 @Service
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryMapper categoryMapper;
-
-    public CategoryServiceImpl(CategoryMapper categoryMapper) {
-        this.categoryMapper = categoryMapper;
-    }
 
     @Override
     public List<Category> list() {

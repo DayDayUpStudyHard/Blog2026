@@ -9,6 +9,7 @@ import com.blog.mapper.ArticleMapper;
 import com.blog.mapper.ArticleTagMapper;
 import com.blog.service.ArticleService;
 import com.blog.service.TagService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -27,17 +28,12 @@ import java.util.Map;
  * </ul>
  */
 @Service
+@RequiredArgsConstructor
 public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleMapper articleMapper;
     private final ArticleTagMapper articleTagMapper;
     private final TagService tagService;
-
-    public ArticleServiceImpl(ArticleMapper articleMapper, ArticleTagMapper articleTagMapper, TagService tagService) {
-        this.articleMapper = articleMapper;
-        this.articleTagMapper = articleTagMapper;
-        this.tagService = tagService;
-    }
 
     @Override
     public Page<Article> getPublishedList(int page, int size, Long categoryId, String keyword) {

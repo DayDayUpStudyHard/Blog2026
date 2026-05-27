@@ -6,6 +6,7 @@ import com.blog.entity.Article;
 import com.blog.entity.Tag;
 import com.blog.service.ArticleService;
 import com.blog.service.TagService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -19,16 +20,12 @@ import java.util.Map;
  * 列表接口返回 {@code content} 字段为空以减少传输量，详情接口返回完整内容。
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/articles")
 public class ArticleController {
 
     private final ArticleService articleService;
     private final TagService tagService;
-
-    public ArticleController(ArticleService articleService, TagService tagService) {
-        this.articleService = articleService;
-        this.tagService = tagService;
-    }
 
     @GetMapping
     public Result<Map<String, Object>> list(

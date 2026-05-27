@@ -2,6 +2,7 @@ package com.blog.controller.admin;
 
 import com.blog.common.Result;
 import com.blog.service.CommentService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -13,14 +14,11 @@ import java.util.Map;
  * 评论状态通常为 0(待审)/1(通过)/2(垃圾)，通过 {@code PUT /{id}/status} 切换。
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/admin/comments")
 public class CommentAdminController {
 
     private final CommentService commentService;
-
-    public CommentAdminController(CommentService commentService) {
-        this.commentService = commentService;
-    }
 
     @GetMapping
     public Result<Map<String, Object>> list(
