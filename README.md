@@ -32,7 +32,11 @@ Blog2026/
 │   │   └── application.yml
 │   └── sql/init.sql      # 数据库初始化脚本
 ├── blog-admin/           # 管理后台 (Vue 3)
-└── blog-front/           # 博客前台 (Vue 3)
+├── blog-front/           # 博客前台 (Vue 3)
+└── tools/                # 小工具平台
+    └── travel-assistant/ # 智能旅行助手
+        ├── backend/      # Python FastAPI
+        └── frontend/     # Vue 3 + TypeScript
 ```
 
 ## 快速开始
@@ -169,3 +173,87 @@ blog:
 > **注意：**
 > - MinIO 默认使用路径样式访问（`forcePathStyle: true`），代码已启用此选项
 > - Bucket 需在 MinIO Console 中提前创建并设为 public 访问
+
+## 小工具平台
+
+博客右下角浮窗提供小工具入口，hover 弹出工具列表，点击在全屏 Modal 中通过 iframe 加载。各工具独立部署，前后端分离。
+
+### 智能旅行助手
+
+输入城市、天数、偏好，自动生成多天旅行计划（景点推荐 + 餐饮搭配 + 酒店推荐 + 天气查询）。
+
+| 层级 | 技术 |
+|------|------|
+| LLM 对话 | DeepSeek (OpenAI 兼容 API) |
+| 后端框架 | FastAPI + Uvicorn |
+| 数据校验 | Pydantic v2 |
+| 地图服务 | 高德 POI 搜索 API |
+| 图片服务 | Unsplash API |
+| 前端框架 | Vue 3 + TypeScript |
+| UI 组件 | Ant Design Vue 4 |
+| 导出 | html2canvas + jsPDF（PNG / PDF） |
+
+**项目结构：**
+
+```
+tools/travel-assistant/
+├── backend/
+│   ├── run.py                    # 启动入口 (uvicorn, port 8001)
+│   ├── requirements.txt
+│   └── app/
+│       ├── api/
+│       │   ├── main.py           # FastAPI app 工厂 + CORS
+│       │   └── routes.py         # /api/trip/plan, /api/ping
+│       ├── agents/
+│       │   ├── prompts.py        # LLM prompt 模板（标准/紧凑）
+│       │   └── trip_planner.py   # 规划引擎：LLM 调用、去重补位、并行编排
+│       ├── models/
+│       │   └── schemas.py        # Pydantic 数据模型
+│       ├── services/
+│       │   ├── amap_service.py   # 高德 POI 搜索 + 天气
+│       │   └── unsplash_service.py  # Unsplash 城市封面图
+│       └── config.py             # 环境变量配置
+└── frontend/
+    ├── vite.config.ts
+    ├── package.json
+    └── src/
+        ├── views/
+        │   ├── Home.vue          # 表单页（城市、天数、偏好、日期）
+        │   └── Result.vue        # 结果展示 + 导出
+        ├── services/api.ts       # axios 封装 (base URL, timeout 600s)
+        ├── types/index.ts        # TypeScript 类型定义
+        └── router/index.ts       # 路由配置
+```
+
+**核心功能：**
+
+- **多路并行**：酒店/天气/景点/餐饮 4 个 LLM 调用并行（ThreadPoolExecutor），缩短响应时间
+- **跨天去重**：prompt 约束 + 后处理去重，保证多天无重复景点，不足时降级补位
+- **自适应模式**：≤3 天标准模式（完整数据），>3 天紧凑模式（精简 POI + 每天 2 景点 2 餐）
+- **前端联动**：结束日期自动计算（开始 + 天数 - 1），不可选过去日期
+- **偏好多选**：旅行偏好支持多选标签
+- **导出**：PNG 图片 + PDF A4 多页自动分页
+
+**启动：**
+
+```bash
+# 后端
+cd tools/travel-assistant/backend
+pip install -r requirements.txt
+cp .env.example .env    # 编辑 .env 填入 API key
+python run.py           # → http://localhost:8001
+
+# 前端
+cd tools/travel-assistant/frontend
+npm install
+npm run dev             # → http://localhost:5175
+```
+
+**环境变量 (.env)：**
+
+| 变量 | 说明 |
+|------|------|
+| `DEEPSEEK_API_KEY` | DeepSeek API 密钥 |
+| `DEEPSEEK_BASE_URL` | DeepSeek API 地址（默认 https://api.deepseek.com） |
+| `AMAP_API_KEY` | 高德地图 Web API 密钥 |
+| `UNSPLASH_ACCESS_KEY` | Unsplash API 访问密钥 |
