@@ -225,11 +225,31 @@ tools/travel-assistant/
         └── router/index.ts       # 路由配置
 ```
 
+**架构对照（FastAPI vs Spring Boot）：**
+
+每个后端文件都能在 Spring Boot 项目里找到对应角色：
+
+| 旅行助手文件 | 角色 | Spring Boot 对应 |
+|-------------|------|-----------------|
+| `api/routes.py` | 路由定义，处理 HTTP 请求 → 调用 service → 返回响应 | **Controller**（`@RestController`） |
+| `api/main.py` | 创建 FastAPI app，注册路由、CORS 中间件 | **`@SpringBootApplication` + WebConfig** |
+| `models/schemas.py` | 请求/响应数据结构定义，入参校验 | **Entity + DTO**（`@Entity` / 自定义 DTO） |
+| `agents/trip_planner.py` | 核心业务逻辑：编排 LLM 调用、去重补位、结果拼装 | **Service**（`@Service`） |
+| `agents/prompts.py` | LLM 提示词模板常量 | **资源文件**（`application.yml` 中的配置 / i18n） |
+| `services/amap_service.py` | 封装高德地图 API（POI、天气） | **Service + Feign Client** |
+| `services/unsplash_service.py` | 封装 Unsplash 图片检索 API | **Service + RestTemplate** |
+| `config.py` | 读取环境变量，集中管理配置 | **`application.yml` + `@ConfigurationProperties`** |
+
+前后端分工上，`routes.py` 只做薄薄一层——接收请求、调 agent、返回结果——和
+`ArticleController.java` 调用 `ArticleServiceImpl` 的模式一致。
+
 **核心功能：**
 
-- **多路并行**：酒店/天气/景点/餐饮 4 个 LLM 调用并行（ThreadPoolExecutor），缩短响应时间
+- **Token 优化**：天气数据纯代码转换（零 LLM 调用），全面 compact prompt，3 次 LLM 调用完成规划，input token 减半
+- **多路并行**：酒店/景点 2 个 LLM 调用 + 天气代码转换 + 备用 POI 并行（ThreadPoolExecutor），Unsplash 图片并行获取
 - **跨天去重**：prompt 约束 + 后处理去重，保证多天无重复景点，不足时降级补位
-- **自适应模式**：≤3 天标准模式（完整数据），>3 天紧凑模式（精简 POI + 每天 2 景点 2 餐）
+- **自适应模式**：≤5 天标准模式（完整数据），>5 天紧凑模式（精简 POI + 每天 2 景点 2 餐）
+- **LLM 超时保护**：每个 LLM 调用 60s 超时，防挂死
 - **前端联动**：结束日期自动计算（开始 + 天数 - 1），不可选过去日期
 - **偏好多选**：旅行偏好支持多选标签
 - **导出**：PNG 图片 + PDF A4 多页自动分页
@@ -253,7 +273,8 @@ npm run dev             # → http://localhost:5175
 
 | 变量 | 说明 |
 |------|------|
-| `DEEPSEEK_API_KEY` | DeepSeek API 密钥 |
-| `DEEPSEEK_BASE_URL` | DeepSeek API 地址（默认 https://api.deepseek.com） |
+| `LLM_API_KEY` | LLM API 密钥（支持 DeepSeek 等 OpenAI 兼容 API） |
+| `LLM_BASE_URL` | LLM API 地址（默认 https://api.openai.com/v1） |
+| `LLM_MODEL` | 模型名称（默认 deepseek-chat） |
 | `AMAP_API_KEY` | 高德地图 Web API 密钥 |
 | `UNSPLASH_ACCESS_KEY` | Unsplash API 访问密钥 |

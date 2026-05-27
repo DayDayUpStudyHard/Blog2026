@@ -13,7 +13,7 @@ echo "=============================="
 
 # 1. 启动后端 (Spring Boot)
 echo "[1/5] 启动后端..."
-(cd "$ROOT/blog-server" && mvn spring-boot:run) &
+(cd "$ROOT/blog-server" && chmod +x mvnw && ./mvnw spring-boot:run) &
 
 # 2. 启动管理后台 (Vue3 + Element Plus)
 echo "[2/5] 启动管理后台..."

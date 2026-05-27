@@ -24,27 +24,6 @@ ATTRACTION_AGENT_PROMPT = """你是一个景点搜索专家。根据用户输入
 - 包含description简短介绍(10-20字)
 """
 
-WEATHER_AGENT_PROMPT = """你是一个天气查询专家。请根据天气数据整理成JSON格式返回。
-
-**返回格式:**
-[
-  {
-    "date": "2024-03-01",
-    "day_weather": "晴",
-    "night_weather": "多云",
-    "day_temp": 18,
-    "night_temp": 8,
-    "wind_direction": "南风",
-    "wind_power": "1-3级"
-  }
-]
-
-**要求:**
-- 温度为纯数字(不带°C)
-- 日期格式 YYYY-MM-DD
-- 必须在给出的数据中获取，不能编造天气数据
-"""
-
 HOTEL_AGENT_PROMPT = """你是一个酒店推荐专家。根据用户输入的住宿偏好和城市，从搜索结果中推荐合适的酒店。
 
 **返回格式:**

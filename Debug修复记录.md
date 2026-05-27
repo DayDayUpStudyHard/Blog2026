@@ -4,6 +4,41 @@
 
 ---
 
+## 智能旅行助手 — Token + 速度优化
+
+**日期**：2026-05-28
+
+### 改动
+
+4 项优化，将单次请求 LLM 调用从 4 次减为 3 次，input token 减少约 50%。
+
+1. **天气 Agent 改纯代码**：天气数据从 Amap API 返回结构固定，`dayweather` → `day_weather` 纯字段映射，无需 LLM 理解。删掉 `WEATHER_AGENT_PROMPT`，`_fetch_weather` 改为 dict 推导式转换。
+2. **全面 compact 化**：所有 prompt 精简为单行紧凑格式，子代理输出统一 `json.dumps(indent=None)`，planner prompt 和输入去 Markdown 缩进标记。
+3. **LLM timeout**：`_llm_chat` 添加 `timeout=60`，防止 LLM 服务挂起无限阻塞。
+4. **Unsplash 并行化**：景点图片获取从顺序遍历改为 `ThreadPoolExecutor(max_workers=5)` 并行。
+5. **默认模型**：`config.py` 从 `gpt-3.5-turbo` 改为 `deepseek-chat`。
+
+### Token 对比
+
+| 指标 | 优化前 | 优化后 |
+|------|--------|--------|
+| LLM 调用 | 4 次 | **3 次** |
+| 输入 token (~3天) | ~8000 | **~3500** |
+| 天气 prompt | 30 行 | 0（纯代码） |
+| 景点 prompt | 25 行 | **3 行** |
+| 酒店 prompt | 20 行 | **4 行** |
+| Planner prompt (标准) | 50 行 | **15 行** |
+| Planner prompt (紧凑) | 35 行 | **10 行** |
+
+| 文件 | 改动 |
+|------|------|
+| `prompts.py` | 删除 WEATHER_AGENT_PROMPT；全部 prompt 精简为紧凑单行格式 |
+| `trip_planner.py` | `_fetch_weather` 改纯代码；子代理统一 indent=None；`_llm_chat` 加 timeout；planner 输入 compact |
+| `routes.py` | Unsplash ThreadPoolExecutor 并行 |
+| `config.py` | 默认 model → deepseek-chat |
+
+---
+
 ## blog-server — Lombok 优化：@RequiredArgsConstructor 替换显式构造器
 
 **日期**：2026-05-27

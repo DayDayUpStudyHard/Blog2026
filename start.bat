@@ -9,7 +9,7 @@ echo.
 cd /d "%~dp0"
 
 echo [1/5] Starting backend (Spring Boot :8080) ...
-start "Blog2026-Server" cmd /k "title Blog2026-Server && cd /d %~dp0blog-server && mvn spring-boot:run"
+start "Blog2026-Server" cmd /k "title Blog2026-Server && cd /d %~dp0blog-server && mvnw.cmd spring-boot:run"
 
 echo [2/5] Starting admin (Vite :5173) ...
 start "Blog2026-Admin" cmd /k "title Blog2026-Admin && cd /d %~dp0blog-admin && npm run dev"

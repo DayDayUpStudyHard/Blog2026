@@ -7,7 +7,6 @@ from app.models.schemas import TripPlanRequest, TripPlan
 from app.services.amap_service import search_poi, get_weather
 from app.agents.prompts import (
     ATTRACTION_AGENT_PROMPT,
-    WEATHER_AGENT_PROMPT,
     HOTEL_AGENT_PROMPT,
     PLANNER_AGENT_PROMPT,
     PLANNER_AGENT_PROMPT_COMPACT,
@@ -43,6 +42,7 @@ class TripPlannerAgent:
         )
         if max_tokens is not None:
             kwargs["max_tokens"] = max_tokens
+        kwargs["timeout"] = 60
         resp = self.client.chat.completions.create(**kwargs)
         return resp.choices[0].message.content
 
@@ -52,21 +52,27 @@ class TripPlannerAgent:
         data = search_poi(keywords=f"{preferences} 景点", city=city, offset=offset)
         if compact and len(data) > 6:
             data = data[:6]
-        indent = None if compact else 2
-        text = json.dumps(data, ensure_ascii=False, indent=indent)
+        text = json.dumps(data, ensure_ascii=False)
         return self._llm_chat(
             ATTRACTION_AGENT_PROMPT,
-            f"用户偏好: {preferences}\n城市: {city}\n\n景点搜索数据:\n{text}\n\n请整理出推荐的景点列表(JSON格式)"
+            f"偏好: {preferences}\n城市: {city}\nPOI数据: {text}\n请筛选推荐景点(紧凑JSON数组)"
         )
 
     def _fetch_weather(self, city: str) -> str:
-        logger.info("Fetching weather...")
+        """纯代码转换天气数据，无需LLM"""
+        logger.info("Transforming weather data...")
         data = get_weather(city)
-        text = json.dumps(data, ensure_ascii=False, indent=2)
-        return self._llm_chat(
-            WEATHER_AGENT_PROMPT,
-            f"城市: {city}\n\n天气数据:\n{text}\n\n请整理出天气信息列表(JSON格式)"
-        )
+        casts = data.get("casts", [])
+        result = [{
+            "date": c.get("date"),
+            "day_weather": c.get("dayweather"),
+            "night_weather": c.get("nightweather"),
+            "day_temp": int(c.get("daytemp", 0)),
+            "night_temp": int(c.get("nighttemp", 0)),
+            "wind_direction": c.get("daywind"),
+            "wind_power": c.get("daypower"),
+        } for c in casts]
+        return json.dumps(result, ensure_ascii=False)
 
     def _fetch_backup_poi(self, city: str) -> list[dict]:
         """Fetch raw POI backup pool for fallback when dedup leaves gaps."""
@@ -79,15 +85,14 @@ class TripPlannerAgent:
         data = search_poi(keywords=f"{accommodation} 酒店", city=city, offset=offset)
         if compact and len(data) > 6:
             data = data[:6]
-        indent = None if compact else 2
-        text = json.dumps(data, ensure_ascii=False, indent=indent)
+        text = json.dumps(data, ensure_ascii=False)
         return self._llm_chat(
             HOTEL_AGENT_PROMPT,
-            f"住宿偏好: {accommodation}\n城市: {city}\n\n酒店搜索数据:\n{text}\n\n请整理出推荐的酒店列表(JSON格式)"
+            f"偏好: {accommodation}\n城市: {city}\n酒店数据: {text}\n请筛选推荐酒店(紧凑JSON数组)"
         )
 
     def plan_trip(self, request: TripPlanRequest) -> TripPlan:
-        compact = request.days > 3
+        compact = request.days > 5
         mode = "compact" if compact else "standard"
         logger.info(f"Planning trip for {request.city}, {request.days} days [{mode} mode]")
 
@@ -130,33 +135,16 @@ class TripPlannerAgent:
         if compact:
             prompt = PLANNER_AGENT_PROMPT_COMPACT
             planner_max_tokens = 16384
-            planner_query = f"城市:{request.city} {request.days}日 偏好:{request.preferences} 预算:{request.budget} 交通:{request.transportation} 住宿:{request.accommodation}\n景点:{attraction_response}\n天气:{weather_response}\n酒店:{hotel_response}"
+            planner_query = (f"城市:{request.city} {request.days}日 偏好:{request.preferences} 预算:{request.budget}"
+                             f" 交通:{request.transportation} 住宿:{request.accommodation}"
+                             f"\n景点:{attraction_response}\n天气:{weather_response}\n酒店:{hotel_response}")
         else:
             prompt = PLANNER_AGENT_PROMPT
             planner_max_tokens = 8192
-            planner_query = f"""
-请根据以下信息生成{request.city}的{request.days}日旅行计划:
-
-**用户需求:**
-- 目的地: {request.city}
-- 日期: {request.start_date} 至 {request.end_date}
-- 天数: {request.days}天
-- 偏好: {request.preferences}
-- 预算: {request.budget}
-- 交通方式: {request.transportation}
-- 住宿类型: {request.accommodation}
-
-**景点信息:**
-{attraction_response}
-
-**天气信息:**
-{weather_response}
-
-**酒店信息:**
-{hotel_response}
-
-请生成详细的旅行计划JSON。
-"""
+            planner_query = (f"{request.city} {request.days}日 {request.start_date}-{request.end_date}"
+                             f" 偏好:{request.preferences} 预算:{request.budget} 交通:{request.transportation}"
+                             f" 住宿:{request.accommodation}"
+                             f"\n景点:{attraction_response}\n天气:{weather_response}\n酒店:{hotel_response}")
 
         planner_response = self._llm_chat(prompt, planner_query, temperature=0.5, max_tokens=planner_max_tokens)
 

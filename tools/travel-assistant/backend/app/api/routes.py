@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import APIRouter, HTTPException
 from app.models.schemas import TripPlanRequest, TripPlan
 from app.agents.trip_planner import TripPlannerAgent
@@ -31,19 +32,20 @@ async def create_trip_plan(request: TripPlanRequest) -> TripPlan:
     try:
         trip_plan = _get_planner().plan_trip(request)
 
-        # Enrich with Unsplash images
+        # Enrich with Unsplash images (parallel)
         unsplash = _get_unsplash()
         if unsplash:
-            for day in trip_plan.days:
-                for attraction in day.attractions:
-                    if not attraction.image_url:
-                        try:
-                            image_url = unsplash.get_photo_url(
-                                f"{attraction.name} {trip_plan.city}"
-                            )
-                            attraction.image_url = image_url
-                        except Exception as e:
-                            logger.warning(f"Failed to get image: {e}")
+            tasks = {}
+            with ThreadPoolExecutor(max_workers=5) as ex:
+                for day in trip_plan.days:
+                    for attr in day.attractions:
+                        if not attr.image_url:
+                            tasks[ex.submit(unsplash.get_photo_url, f"{attr.name} {trip_plan.city}")] = attr
+                for future in as_completed(tasks):
+                    try:
+                        tasks[future].image_url = future.result()
+                    except Exception as e:
+                        logger.warning(f"Failed to get image: {e}")
 
         return trip_plan
     except Exception as e:
