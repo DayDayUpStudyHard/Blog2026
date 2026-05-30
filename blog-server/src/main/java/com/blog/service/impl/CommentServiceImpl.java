@@ -45,10 +45,14 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public Page<Comment> getAdminList(int page, int size, Integer status) {
+    public Page<Comment> getAdminList(int page, int size, Integer status, Integer type) {
         LambdaQueryWrapper<Comment> wrapper = new LambdaQueryWrapper<Comment>()
                 .orderByDesc(Comment::getCreateTime);
         if (status != null) wrapper.eq(Comment::getStatus, status);
+        if (type != null) {
+            if (type == 0) wrapper.isNull(Comment::getArticleId);
+            else wrapper.isNotNull(Comment::getArticleId);
+        }
         return commentMapper.selectPage(new Page<>(page, size), wrapper);
     }
 
@@ -63,5 +67,27 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void delete(Long id) {
         commentMapper.deleteById(id);
+    }
+
+    @Override
+    public Page<Comment> getGuestbookList(int page, int size) {
+        return commentMapper.selectPage(new Page<>(page, size),
+                new LambdaQueryWrapper<Comment>()
+                        .isNull(Comment::getArticleId)
+                        .eq(Comment::getStatus, 1)
+                        .orderByDesc(Comment::getCreateTime));
+    }
+
+    @Override
+    public Comment createGuestbook(CommentDto dto) {
+        Comment comment = new Comment();
+        comment.setArticleId(null);
+        comment.setAuthor(dto.getAuthor());
+        comment.setEmail(dto.getEmail());
+        comment.setContent(dto.getContent());
+        comment.setStatus(1);
+        comment.setCreateTime(LocalDateTime.now());
+        commentMapper.insert(comment);
+        return comment;
     }
 }

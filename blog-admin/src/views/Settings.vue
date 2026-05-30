@@ -23,6 +23,19 @@
             <el-form-item label="头像">
               <el-input v-model="profile.avatar" placeholder="https://..." />
             </el-form-item>
+            <el-form-item label="简介">
+              <el-input v-model="profile.bio" placeholder="一句话介绍自己" />
+            </el-form-item>
+            <el-form-item label="社交链接">
+              <div class="social-links-editor">
+                <div v-for="(link, i) in socialLinks" :key="i" class="social-row">
+                  <el-input v-model="link.name" placeholder="名称" style="width:100px" size="small" />
+                  <el-input v-model="link.url" placeholder="URL" style="flex:1" size="small" />
+                  <el-button size="small" type="danger" text @click="socialLinks.splice(i, 1)">删除</el-button>
+                </div>
+                <el-button size="small" @click="socialLinks.push({ name: '', url: '', icon: '' })">+ 添加</el-button>
+              </div>
+            </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="updateProfile" :loading="saving">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -61,26 +74,28 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getUserInfo } from '../api/index.js'
-import api from '../api/index.js'
+import { getUserInfo, updateProfile as updateProfileApi, updatePassword as updatePasswordApi } from '../api/index.js'
 
 const activeTab = ref('profile')
 const saving = ref(false)
-const profile = ref({ nickname: '', email: '', avatar: '' })
+const profile = ref({ nickname: '', email: '', avatar: '', bio: '' })
 const passwordForm = ref({ oldPassword: '', newPassword: '' })
+const socialLinks = ref([])
 
 onMounted(async () => {
   try {
     const res = await getUserInfo()
     const user = res.data.data
-    profile.value = { nickname: user.nickname || '', email: user.email || '', avatar: user.avatar || '' }
+    profile.value = { nickname: user.nickname || '', email: user.email || '', avatar: user.avatar || '', bio: user.bio || '' }
+    try { socialLinks.value = JSON.parse(user.socialLinks || '[]') } catch { socialLinks.value = [] }
   } catch {}
 })
 
 async function updateProfile() {
   saving.value = true
   try {
-    await api.put('/api/auth/profile', profile.value)
+    const data = { ...profile.value, socialLinks: JSON.stringify(socialLinks.value) }
+    await updateProfileApi(data)
     ElMessage.success('保存成功')
   } finally { saving.value = false }
 }
@@ -89,7 +104,7 @@ async function updatePassword() {
   if (!passwordForm.value.oldPassword || !passwordForm.value.newPassword) return
   saving.value = true
   try {
-    await api.put('/api/auth/password', passwordForm.value)
+    await updatePasswordApi(passwordForm.value)
     ElMessage.success('密码修改成功')
     passwordForm.value = { oldPassword: '', newPassword: '' }
   } finally { saving.value = false }
@@ -123,4 +138,7 @@ async function updatePassword() {
 .settings-form :deep(.el-button--primary) {
   display: flex; align-items: center; gap: 6px;
 }
+
+.social-links-editor { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.social-row { display: flex; gap: 6px; align-items: center; }
 </style>

@@ -33,4 +33,24 @@ export function addComment(articleId, data) {
   return api.post(`/api/articles/${articleId}/comments`, data)
 }
 
+export function getSiteInfo() {
+  return api.get('/api/site/info')
+}
+
+export function getMoments(params) {
+  return api.get('/api/moments', { params })
+}
+
+export function getGuestbookMessages(params) {
+  return api.get('/api/guestbook', { params })
+}
+
+export function addGuestbookMessage(data) {
+  return api.post('/api/guestbook', data)
+}
+
+export function getAbout() {
+  return api.get('/api/about')
+}
+
 export default api

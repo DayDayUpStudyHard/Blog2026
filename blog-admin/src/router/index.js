@@ -14,6 +14,8 @@ const routes = [
       { path: 'categories', name: 'Categories', component: () => import('../views/CategoryManage.vue') },
       { path: 'comments', name: 'Comments', component: () => import('../views/CommentManage.vue') },
       { path: 'tags', name: 'Tags', component: () => import('../views/TagManage.vue') },
+      { path: 'moments', name: 'Moments', component: () => import('../views/MomentManage.vue') },
+      { path: 'about-page', name: 'AboutEdit', component: () => import('../views/AboutEdit.vue') },
       { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue') }
     ]
   }

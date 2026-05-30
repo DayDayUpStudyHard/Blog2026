@@ -37,6 +37,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User getSiteInfo() {
+        User user = userMapper.selectById(1L);
+        if (user != null) user.setPassword(null);
+        return user;
+    }
+
+    @Override
     public void updatePassword(Long userId, String oldPassword, String newPassword) {
         User user = userMapper.selectById(userId);
         if (user == null || !BCrypt.checkpw(oldPassword, user.getPassword())) {
@@ -47,12 +54,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateProfile(Long userId, String nickname, String email, String avatar) {
+    public void updateProfile(Long userId, String nickname, String email, String avatar, String bio, String socialLinks) {
         User user = userMapper.selectById(userId);
         if (user == null) throw new IllegalArgumentException("用户不存在");
         if (nickname != null) user.setNickname(nickname);
         if (email != null) user.setEmail(email);
         if (avatar != null) user.setAvatar(avatar);
+        if (bio != null) user.setBio(bio);
+        if (socialLinks != null) user.setSocialLinks(socialLinks);
         userMapper.updateById(user);
     }
 }

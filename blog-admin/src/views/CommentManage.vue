@@ -4,6 +4,14 @@
       <h3 class="page-title">留言管理</h3>
       <div class="toolbar">
         <div class="filter-group">
+          <span class="filter-label">类型:</span>
+          <el-radio-group v-model="filterType" @change="fetchData" size="small">
+            <el-radio-button :value="null">全部</el-radio-button>
+            <el-radio-button :value="1">文章评论</el-radio-button>
+            <el-radio-button :value="0">留言板</el-radio-button>
+          </el-radio-group>
+        </div>
+        <div class="filter-group">
           <span class="filter-label">状态:</span>
           <el-radio-group v-model="filterStatus" @change="fetchData" size="small">
             <el-radio-button :value="null">全部</el-radio-button>
@@ -28,7 +36,11 @@
             <span class="content-cell">{{ row.content }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="articleId" label="文章ID" width="80" align="center" />
+        <el-table-column prop="articleId" label="类型" width="80" align="center">
+          <template #default="{ row }">
+            <span>{{ row.articleId != null ? '文章' : '留言板' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <span class="status-badge" :class="statusClass(row.status)">
@@ -82,6 +94,7 @@ const page = ref(1)
 const pageSize = 10
 const total = ref(0)
 const filterStatus = ref(null)
+const filterType = ref(null)
 
 onMounted(() => fetchData())
 
@@ -93,6 +106,7 @@ async function fetchData() {
   try {
     const params = { page: page.value, size: pageSize }
     if (filterStatus.value !== null) params.status = filterStatus.value
+    if (filterType.value !== null) params.type = filterType.value
     const res = await getAdminComments(params)
     comments.value = res.data.data.records
     total.value = res.data.data.total

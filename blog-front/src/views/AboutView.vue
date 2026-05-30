@@ -1,109 +1,103 @@
 <template>
   <div class="about-page">
     <div class="page-head">
-      <h2 class="page-title">关于 Blog2026</h2>
+      <h2 class="page-title">关于</h2>
+      <p class="page-desc">关于我和这个博客</p>
       <div class="page-line"></div>
     </div>
 
-    <div class="about-grid">
-      <div class="about-card">
-        <div class="card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        </div>
-        <div class="card-text">
-          <h4>关于本站</h4>
-          <p>这里是我的个人博客，记录技术笔记、读书心得和生活感悟。</p>
-        </div>
-      </div>
+    <n-spin :show="loading">
+      <div class="markdown-body glass-card" v-html="renderedContent"></div>
 
-      <div class="about-card">
-        <div class="card-icon green">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <div class="timeline-section" v-if="timeline.length > 0">
+        <div class="section-head">
+          <h3>个人时间线</h3>
+          <div class="head-line"></div>
         </div>
-        <div class="card-text">
-          <h4>技术栈</h4>
-          <p>Spring Boot + Vue 3 + MySQL + Naive UI</p>
-        </div>
-      </div>
-
-      <div class="about-card">
-        <div class="card-icon violet">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </div>
-        <div class="card-text">
-          <h4>联系我</h4>
-          <p>如果你有任何想说的，欢迎在文章下方留言。</p>
+        <div class="timeline">
+          <div v-for="(item, i) in timeline" :key="i" class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-card">
+              <span class="tl-year">{{ item.year }}</span>
+              <h4 class="tl-title">{{ item.title }}</h4>
+              <p class="tl-desc">{{ item.desc }}</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="tech-section">
-      <div class="section-head">
-        <h3>技术栈</h3>
-        <div class="head-line"></div>
-      </div>
-      <div class="stack-grid">
-        <span v-for="tech in techs" :key="tech" class="stack-item">
-          {{ tech }}
-        </span>
-      </div>
-    </div>
+    </n-spin>
   </div>
 </template>
 
 <script setup>
-const techs = ['Spring Boot', 'MyBatis-Plus', 'MySQL', 'Redis', 'Sa-Token', 'Vue 3', 'Naive UI', 'Vite', 'Markdown', 'Docker']
+import { ref, onMounted } from 'vue'
+import { marked } from 'marked'
+import { getAbout } from '../api/index.js'
+
+const loading = ref(true)
+const content = ref('')
+const timeline = ref([])
+const renderedContent = ref('<p style="color:#909399">加载中...</p>')
+
+onMounted(async () => {
+  try {
+    const res = await getAbout()
+    const data = res.data.data
+    content.value = data.content || ''
+    try { timeline.value = JSON.parse(data.timeline || '[]') } catch { timeline.value = [] }
+    try { renderedContent.value = marked(content.value) } catch { renderedContent.value = '<p>内容渲染失败</p>' }
+  } catch (err) {
+    console.error('About page load failed:', err)
+    content.value = '# 关于我\n\n这里是我的个人博客。\n\n请确保后端服务已启动。'
+    try { renderedContent.value = marked(content.value) } catch { renderedContent.value = '<p>关于我</p><p>这里是我的个人博客。</p>' }
+    timeline.value = []
+  } finally { loading.value = false }
+})
 </script>
 
 <style scoped>
 .about-page { padding: 28px 0; }
+
 .page-head { margin-bottom: 28px; }
-.page-title { font-size: 22px; color: #303133; margin-bottom: 10px; font-weight: 600; }
+.page-title { font-size: 22px; color: #303133; margin-bottom: 6px; font-weight: 600; }
+.page-desc { font-size: 14px; color: #909399; margin: 0 0 10px; }
 .page-line { height: 1px; background: #e8ecf0; }
 
-.about-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
-
-.about-card {
-  display: flex; gap: 18px; align-items: flex-start;
-  background: #ffffff; border: 1px solid #e8ecf0;
-  padding: 20px 22px; border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.markdown-body {
+  padding: 28px 32px; border-radius: 14px; margin-bottom: 36px;
 }
-.about-card:hover {
-  border-color: #409EFF;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  transform: translateY(-3px);
-}
+.markdown-body :deep(h1) { font-size: 24px; margin-bottom: 16px; }
+.markdown-body :deep(h2) { font-size: 18px; margin-top: 24px; margin-bottom: 12px; }
+.markdown-body :deep(h3) { font-size: 16px; }
+.markdown-body :deep(p) { line-height: 1.8; color: #606266; }
+.markdown-body :deep(ul) { padding-left: 20px; }
+.markdown-body :deep(li) { line-height: 1.8; color: #606266; }
+.markdown-body :deep(strong) { color: #303133; }
 
-.card-icon {
-  width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
-  background: linear-gradient(135deg, #ecf5ff, #d9ecff);
-  display: flex; align-items: center; justify-content: center; color: #409EFF;
-}
-.card-icon.green { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #67c23a; }
-.card-icon.violet { background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #8b5cf6; }
-
-.card-text h4 {
-  font-size: 15px; color: #303133;
-  font-weight: 600; margin: 0 0 6px;
-}
-.card-text p { font-size: 14px; color: #909399; line-height: 1.65; margin: 0; }
-
-.tech-section { }
-.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .section-head h3 { font-size: 16px; color: #303133; font-weight: 600; margin: 0; white-space: nowrap; }
 .head-line { flex: 1; height: 1px; background: #e8ecf0; }
 
-.stack-grid { display: flex; gap: 8px; flex-wrap: wrap; }
-.stack-item {
-  padding: 7px 14px; border-radius: 6px;
-  font-size: 13px;
-  background: #ffffff; border: 1px solid #e8ecf0;
-  color: #606266; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before {
+  content: ''; position: absolute; left: 9px; top: 0; bottom: 0;
+  width: 2px; background: linear-gradient(180deg, #409EFF, #8b5cf6);
 }
-.stack-item:hover {
-  border-color: #409EFF; color: #409EFF; background: #ecf5ff;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+.tl-item { position: relative; margin-bottom: 24px; }
+.tl-dot {
+  position: absolute; left: -24px; top: 8px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #409EFF; border: 2px solid #fff;
+  box-shadow: 0 0 0 3px rgba(64,158,255,0.2);
 }
+.tl-card {
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 12px; padding: 16px 20px;
+}
+.tl-year { font-size: 12px; color: #409EFF; font-weight: 600; }
+.tl-title { font-size: 15px; color: #303133; font-weight: 600; margin: 4px 0; }
+.tl-desc { font-size: 13px; color: #909399; margin: 0; line-height: 1.6; }
 </style>

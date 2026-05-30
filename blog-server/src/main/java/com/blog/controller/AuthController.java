@@ -53,7 +53,7 @@ public class AuthController {
     @PutMapping("/profile")
     public Result<?> updateProfile(@RequestBody User user) {
         long userId = StpUtil.getLoginIdAsLong();
-        userService.updateProfile(userId, user.getNickname(), user.getEmail(), user.getAvatar());
+        userService.updateProfile(userId, user.getNickname(), user.getEmail(), user.getAvatar(), user.getBio(), user.getSocialLinks());
         return Result.ok();
     }
 }

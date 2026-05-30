@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS t_user (
     nickname VARCHAR(50),
     avatar VARCHAR(255),
     email VARCHAR(100),
+    bio VARCHAR(255) COMMENT '一句话简介',
+    social_links TEXT COMMENT '社交链接 JSON',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -52,15 +54,31 @@ CREATE TABLE IF NOT EXISTS t_article_tag (
     tag_id BIGINT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 留言表
+-- 留言表（article_id 为 NULL 表示留言板留言）
 CREATE TABLE IF NOT EXISTS t_comment (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    article_id BIGINT NOT NULL,
+    article_id BIGINT NULL,
     author VARCHAR(50) NOT NULL,
     email VARCHAR(100),
     content TEXT NOT NULL,
     status INT DEFAULT 1,
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 说说表
+CREATE TABLE IF NOT EXISTS t_moment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL COMMENT '说说内容',
+    image VARCHAR(255) COMMENT '可选配图',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 关于页表（单行）
+CREATE TABLE IF NOT EXISTS t_about (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    content LONGTEXT COMMENT '关于页 Markdown 内容',
+    timeline TEXT COMMENT '个人时间线 JSON',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================
@@ -146,3 +164,19 @@ INSERT INTO t_comment (article_id, author, email, content, create_time) VALUES
 (1, '王五', 'wangwu@example.com', '感谢分享，Spring Boot 入门教程写得很清楚！', '2024-01-16 11:00:00'),
 (1, '赵六', 'zhaoliu@example.com', '请问可以出一期 Spring Security 的教程吗？', '2024-01-17 15:30:00'),
 (4, '孙七', 'sunqi@example.com', 'Docker Compose 配置文件帮了大忙，已成功部署。', '2024-04-06 10:00:00');
+
+-- 留言板留言（article_id 为 NULL）
+INSERT INTO t_comment (article_id, author, email, content, create_time) VALUES
+(NULL, '访客小明', 'xiaoming@example.com', '博客做得真棒！界面简洁大方，文章内容也很有深度，已收藏。', '2024-05-05 13:20:00'),
+(NULL, '前端爱好者', 'fe_dev@example.com', 'Vue 3 + Naive UI 的组合确实很舒服，你的暗色模式切换做得也很流畅。', '2024-05-08 09:45:00'),
+(NULL, '路过的Java开发', 'java_dev@example.com', 'Spring Boot 入门教程对我帮助很大，期待更多后端实践文章！', '2024-05-12 16:30:00'),
+(NULL, '设计师小王', 'designer@example.com', '网站的配色和排版都很用心，毛玻璃效果加了不少分 👍', '2024-05-16 11:00:00'),
+(NULL, '老读者', 'reader@example.com', '从你开始写博客就一直在关注，内容越来越好了，加油！', '2024-05-20 08:15:00');
+
+-- 说说
+INSERT INTO t_moment (content, create_time) VALUES
+('今天终于把博客系统搭建完成了，Spring Boot + Vue 3 全家桶，开发体验非常流畅！', '2024-05-10 09:30:00'),
+('分享一个实用技巧：MyBatis-Plus 的分页插件配置非常简单，配合 Page 对象一行代码搞定分页查询。', '2024-05-12 14:20:00'),
+('周末研究了一下 Docker Compose，现在整个项目可以一键启动了：docker-compose up -d 🐳', '2024-05-15 16:45:00'),
+('刚给博客加上了暗色模式支持，CSS 变量的威力真的太大了，几行代码就能实现全局主题切换。', '2024-05-18 11:00:00'),
+('最近在学 Vue 3 的 Composition API，setup 语法糖写起来太舒服了，告别了 Options API 的繁琐。', '2024-05-20 20:15:00');

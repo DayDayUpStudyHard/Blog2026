@@ -22,4 +22,6 @@ public class User {
     private String email;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
+    private String bio;
+    private String socialLinks;
 }

@@ -51,6 +51,22 @@
                 <span class="menu-label">留言管理</span>
               </template>
             </el-menu-item>
+            <el-menu-item index="/moments">
+              <template #title>
+                <span class="menu-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </span>
+                <span class="menu-label">说说管理</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="/about-page">
+              <template #title>
+                <span class="menu-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </span>
+                <span class="menu-label">关于页面</span>
+              </template>
+            </el-menu-item>
             <el-menu-item index="/settings">
               <template #title>
                 <span class="menu-icon">
@@ -120,6 +136,8 @@ const pageTitle = computed(() => {
     '/categories': '分类管理',
     '/tags': '标签管理',
     '/comments': '留言管理',
+    '/moments': '说说管理',
+    '/about-page': '关于页面',
     '/settings': '个人设置',
   }
   if (route.path.startsWith('/articles/') && route.path.endsWith('/edit')) return '编辑文章'
@@ -233,6 +251,10 @@ function logout() {
 .menu :deep(.el-menu-item:nth-child(5).is-active)::before { background: linear-gradient(180deg, #ec4899, #f472b6); }
 .menu :deep(.el-menu-item:nth-child(6).is-active) { color: #6366f1 !important; }
 .menu :deep(.el-menu-item:nth-child(6).is-active)::before { background: linear-gradient(180deg, #6366f1, #818cf8); }
+.menu :deep(.el-menu-item:nth-child(7).is-active) { color: #14b8a6 !important; }
+.menu :deep(.el-menu-item:nth-child(7).is-active)::before { background: linear-gradient(180deg, #14b8a6, #5eead4); }
+.menu :deep(.el-menu-item:nth-child(8).is-active) { color: #f43f5e !important; }
+.menu :deep(.el-menu-item:nth-child(8).is-active)::before { background: linear-gradient(180deg, #f43f5e, #fb7185); }
 
 /* Footer */
 .sidebar-footer { padding: 14px 16px; border-top: 1px solid #f0f2f5; }

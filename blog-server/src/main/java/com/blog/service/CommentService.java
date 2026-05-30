@@ -10,7 +10,9 @@ import com.blog.entity.Comment;
 public interface CommentService {
     Page<Comment> getByArticleId(Long articleId, int page, int size);
     Comment create(Long articleId, CommentDto dto);
-    Page<Comment> getAdminList(int page, int size, Integer status);
+    Page<Comment> getAdminList(int page, int size, Integer status, Integer type);
     void updateStatus(Long id, Integer status);
     void delete(Long id);
+    Page<Comment> getGuestbookList(int page, int size);
+    Comment createGuestbook(CommentDto dto);
 }

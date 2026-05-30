@@ -9,8 +9,14 @@
         <router-link to="/" class="nav-link">
           <span class="nav-label">首页</span>
         </router-link>
+        <router-link to="/moments" class="nav-link">
+          <span class="nav-label">说说</span>
+        </router-link>
         <router-link to="/categories" class="nav-link">
           <span class="nav-label">分类</span>
+        </router-link>
+        <router-link to="/guestbook" class="nav-link">
+          <span class="nav-label">留言板</span>
         </router-link>
         <router-link to="/about" class="nav-link">
           <span class="nav-label">关于</span>

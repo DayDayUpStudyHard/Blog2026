@@ -24,8 +24,9 @@ public class CommentAdminController {
     public Result<Map<String, Object>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Integer status) {
-        var pageResult = commentService.getAdminList(page, size, status);
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Integer type) {
+        var pageResult = commentService.getAdminList(page, size, status, type);
         Map<String, Object> map = new HashMap<>();
         map.put("records", pageResult.getRecords());
         map.put("total", pageResult.getTotal());

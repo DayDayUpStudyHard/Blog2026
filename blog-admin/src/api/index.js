@@ -25,6 +25,8 @@ api.interceptors.response.use(
 
 export function login(data) { return api.post('/api/auth/login', data) }
 export function getUserInfo() { return api.get('/api/auth/info') }
+export function updateProfile(data) { return api.put('/api/auth/profile', data) }
+export function updatePassword(data) { return api.put('/api/auth/password', data) }
 
 export function getAdminArticles(params) { return api.get('/api/admin/articles', { params }) }
 export function createArticle(data) { return api.post('/api/admin/articles', data) }
@@ -51,5 +53,13 @@ export function uploadFile(file) {
   formData.append('file', file)
   return api.post('/api/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 }
+
+export function getAdminMoments(params) { return api.get('/api/admin/moments', { params }) }
+export function createMoment(data) { return api.post('/api/admin/moments', data) }
+export function updateMoment(id, data) { return api.put(`/api/admin/moments/${id}`, data) }
+export function deleteMoment(id) { return api.delete(`/api/admin/moments/${id}`) }
+
+export function getAbout() { return api.get('/api/admin/about') }
+export function updateAbout(data) { return api.put('/api/admin/about', data) }
 
 export default api

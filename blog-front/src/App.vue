@@ -1,5 +1,6 @@
 <template>
   <n-config-provider :theme-overrides="themeOverrides" :theme="null">
+    <n-message-provider>
     <n-loading-bar-provider>
       <div class="app-root">
         <div class="bg-blobs">
@@ -25,6 +26,7 @@
         </button>
       </div>
     </n-loading-bar-provider>
+    </n-message-provider>
   </n-config-provider>
 </template>
 
