@@ -1,5 +1,6 @@
 package com.blog.controller.admin;
 
+import com.blog.annotation.OperationLog;
 import com.blog.common.Result;
 import com.blog.service.CommentService;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +34,14 @@ public class CommentAdminController {
         return Result.ok(map);
     }
 
+    @OperationLog(value = "审核评论", type = "UPDATE")
     @PutMapping("/{id}/status")
     public Result<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
         commentService.updateStatus(id, body.get("status"));
         return Result.ok();
     }
 
+    @OperationLog(value = "删除评论", type = "DELETE")
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
         commentService.delete(id);

@@ -1,5 +1,6 @@
 package com.blog.controller.admin;
 
+import com.blog.annotation.OperationLog;
 import com.blog.common.Result;
 import com.blog.dto.ArticleDto;
 import com.blog.entity.Article;
@@ -47,16 +48,19 @@ public class ArticleAdminController {
         return Result.ok(article);
     }
 
+    @OperationLog(value = "创建文章", type = "CREATE")
     @PostMapping
     public Result<Article> create(@Valid @RequestBody ArticleDto dto) {
         return Result.ok(articleService.create(dto));
     }
 
+    @OperationLog(value = "更新文章", type = "UPDATE")
     @PutMapping("/{id}")
     public Result<Article> update(@PathVariable Long id, @Valid @RequestBody ArticleDto dto) {
         return Result.ok(articleService.update(id, dto));
     }
 
+    @OperationLog(value = "删除文章", type = "DELETE")
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
         articleService.delete(id);

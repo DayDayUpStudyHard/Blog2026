@@ -14,20 +14,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { onMounted } from 'vue'
+import { useThemeStore } from './stores/theme.js'
 
-const theme = ref(localStorage.getItem('blog-admin-theme') || 'light')
-
-function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t)
-  localStorage.setItem('blog-admin-theme', t)
-}
-
-onMounted(() => applyTheme(theme.value))
-watch(theme, applyTheme)
-
-// Expose for other components
-window.__adminTheme = theme
+const themeStore = useThemeStore()
+onMounted(() => themeStore.apply())
 </script>
 
 <style>

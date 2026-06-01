@@ -1,0 +1,36 @@
+# ============================================
+# 阶段一：构建博客前台 blog-front
+# ============================================
+FROM node:20-alpine AS front-build
+WORKDIR /app
+COPY blog-front/package*.json ./
+RUN npm ci --registry=https://registry.npmmirror.com
+COPY blog-front/ ./
+RUN npm run build
+
+# ============================================
+# 阶段二：构建管理后台 blog-admin
+# ============================================
+FROM node:20-alpine AS admin-build
+WORKDIR /app
+COPY blog-admin/package*.json ./
+RUN npm ci --registry=https://registry.npmmirror.com
+COPY blog-admin/ ./
+RUN npm run build
+
+# ============================================
+# 阶段三：Nginx 运行
+# ============================================
+FROM nginx:alpine
+
+# 复制前端静态文件
+COPY --from=front-build /app/dist /usr/share/nginx/html/blog
+COPY --from=admin-build /app/dist /usr/share/nginx/html/admin
+
+# 复制 Nginx 配置
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget -q --spider http://localhost/ || exit 1

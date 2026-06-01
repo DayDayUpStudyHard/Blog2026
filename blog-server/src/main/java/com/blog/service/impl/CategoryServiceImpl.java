@@ -5,6 +5,8 @@ import com.blog.entity.Category;
 import com.blog.mapper.CategoryMapper;
 import com.blog.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,17 +22,20 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryMapper categoryMapper;
 
+    @Cacheable(value = "categories", key = "'all'")
     @Override
     public List<Category> list() {
         return categoryMapper.selectList(new LambdaQueryWrapper<Category>().orderByAsc(Category::getSort));
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     @Override
     public Category create(Category category) {
         categoryMapper.insert(category);
         return category;
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     @Override
     public Category update(Long id, Category category) {
         Category existing = categoryMapper.selectById(id);
@@ -42,6 +47,7 @@ public class CategoryServiceImpl implements CategoryService {
         return existing;
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     @Override
     public void delete(Long id) {
         categoryMapper.deleteById(id);

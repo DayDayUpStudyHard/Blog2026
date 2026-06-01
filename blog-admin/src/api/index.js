@@ -1,8 +1,8 @@
 import axios from 'axios'
-import { useRouter } from 'vue-router'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  // 开发环境: http://localhost:8080，生产环境: / (nginx 反向代理)
+  baseURL: import.meta.env.VITE_API_BASE || '/',
   timeout: 10000
 })
 
@@ -17,7 +17,8 @@ api.interceptors.response.use(
   err => {
     if (err.response && err.response.status === 401) {
       localStorage.removeItem('blog-token')
-      window.location.href = '/login'
+      // 使用 BASE_URL 适配子路径部署
+      window.location.href = import.meta.env.BASE_URL + 'login'
     }
     return Promise.reject(err)
   }

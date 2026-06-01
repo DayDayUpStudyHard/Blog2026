@@ -1,6 +1,7 @@
 package com.blog.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 public class Category {
     @TableId(type = IdType.AUTO)
     private Long id;
+    @NotBlank(message = "分类名称不能为空")
     private String name;
     private String description;
     private Integer sort;

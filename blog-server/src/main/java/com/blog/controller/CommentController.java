@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.annotation.RateLimit;
 import com.blog.common.Result;
 import com.blog.dto.CommentDto;
 import com.blog.entity.Comment;
@@ -35,6 +36,7 @@ public class CommentController {
         return Result.ok(map);
     }
 
+    @RateLimit(key = "comment", limit = 5, window = 60, message = "评论过于频繁，请 1 分钟后再试")
     @PostMapping
     public Result<Comment> create(@PathVariable Long articleId, @Valid @RequestBody CommentDto dto) {
         return Result.ok(commentService.create(articleId, dto));

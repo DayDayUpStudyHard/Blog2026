@@ -133,7 +133,7 @@ async function onUploadImg(files, callback) {
   for (const file of files) {
     const res = await uploadFile(file)
     const raw = res.data.data.url
-    urls.push(raw.startsWith('http') ? raw : 'http://localhost:8080' + raw)
+    urls.push(raw.startsWith('http') ? raw : (import.meta.env.VITE_API_BASE || '') + raw)
   }
   callback(urls)
 }

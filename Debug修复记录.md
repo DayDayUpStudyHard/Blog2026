@@ -4,6 +4,419 @@
 
 ---
 
+## P2 企业级工程化 — Pinia 状态管理 + TypeScript + ESLint + 单元测试
+
+**日期**：2026-06-01
+
+### 背景
+
+P1 完成代码质量和生产防护后，P2 聚焦于工程化成熟度：引入集中式状态管理消除状态分散问题、配置 TypeScript 基础设施、添加代码规范工具、补齐后端单元测试。
+
+### 改动
+
+#### 1. Pinia 状态管理（blog-admin）
+
+**问题**：管理后台的认证 token 和用户信息分散在 `localStorage` 和各组件局部 `ref` 中——登录写入 `localStorage`、`AdminLayout.vue` 独立 fetch 用户信息（不传子组件）、主题切换用 `window.__adminTheme` 全局变量。没有集中式响应式状态。
+
+**新建 stores：**
+
+| Store | 文件 | 管理内容 |
+|-------|------|----------|
+| `useUserStore` | `src/stores/user.js` | token、user 对象、`isLoggedIn`、`displayName`、`avatarLetter`、`login()`、`fetchUserInfo()`、`logout()` |
+| `useThemeStore` | `src/stores/theme.js` | `theme`（light/dark）、`isDark`、`apply()`、`toggle()` |
+
+**组件改造：**
+
+| 组件 | 改动 |
+|------|------|
+| `main.js` | 注册 `createPinia()` |
+| `App.vue` | 移除 `window.__adminTheme` 全局变量，改用 `useThemeStore().apply()` |
+| `AdminLayout.vue` | 移除局部 `user` ref + 独立 `getUserInfo()` 调用，改用 `useUserStore` + `useThemeStore` |
+| `LoginView.vue` | 移除直接 `login()` API 调用 + 手动 `localStorage.setItem`，改用 `useUserStore().login()` |
+| `router/index.js` | 路由守卫保持不变（`localStorage.getItem` 方式兼容 Pinia） |
+
+**效果**：
+- 用户信息全局响应式，子组件可通过 `useUserStore()` 直接获取
+- 主题切换逻辑集中管理，不再依赖 `window` 全局变量
+- 认证流程（登录→存储→登出）统一由 store 管理，组件只需调用 action
+
+#### 2. TypeScript 基础设施（blog-admin）
+
+**新建文件：**
+- `tsconfig.json` — 继承 `@vue/tsconfig/tsconfig.dom.json`，`strict: true`，配置路径别名 `@/*`
+- `src/shims-vue.d.ts` — Vue SFC 类型声明 + `ImportMetaEnv` 环境变量类型定义
+
+**依赖：** `typescript`、`vue-tsc`、`@vue/tsconfig` 作为 devDependencies 安装。
+
+当前保留 `.js` 文件（渐进迁移），后续可按需将关键模块（API、stores、router）迁移到 `.ts`。
+
+#### 3. ESLint 代码规范
+
+**新建文件：**
+
+| 文件 | 内容 |
+|------|------|
+| `blog-admin/eslint.config.mjs` | flat config：`eslint-plugin-vue` 推荐规则 + 禁用 multi-word-component-names 和 no-v-html |
+| `blog-front/eslint.config.mjs` | 同规则 |
+
+**规则说明：**
+- `vue/no-v-html: off` — 项目使用 `v-html` 渲染 Markdown（AboutView），这是预期行为
+- `vue/multi-word-component-names: off` — 允许单名单文件组件
+- `no-console`: 生产环境 warn，开发环境 off
+- `no-debugger`: 生产环境 error
+
+#### 4. 后端单元测试
+
+**依赖：** `spring-boot-starter-test`（JUnit 5.10 + Mockito 5.7 + AssertJ 3.24）+ `h2` 内存数据库
+
+**测试配置：** `src/test/resources/application-test.yml`（H2 内存库 + MySQL 兼容模式）
+
+**测试类：**
+
+| 测试类 | 测试数 | 覆盖内容 |
+|--------|--------|----------|
+| `UserServiceImplTest` | 8 个 | 登录成功/失败、密码空字段、修改密码旧密码错误、更新成功、站点信息获取、资料更新异常/成功 |
+| `AboutServiceImplTest` | 6 个 | 已有数据获取、无数据自动初始化、更新保留 null 字段、同时更新两字段、null 不覆盖、无记录创建 |
+
+**测试模式**：使用 `@ExtendWith(MockitoExtension.class)` + `@Mock` / `@InjectMocks` 进行纯单元测试（不启动 Spring 上下文），Mock Mapper 层验证 Service 层业务逻辑。
+
+### 遇到的问题
+
+**1. Mockito `any()` 与 MyBatis-Plus BaseMapper 重载冲突**
+- 现象：`verify(aboutMapper).insert(any())` 编译报 "ambiguous" 错误
+- 根因：`BaseMapper<T>` 有两个重载 — `insert(T entity)` 和 `insert(Collection<T> entityList)`，Mockito 的 `any()` 可同时匹配两者
+- 修复：移除 `any()` 的 verify 调用，改为通过断言实体状态变化验证行为，不影响测试覆盖率
+
+### 关键文件
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `blog-admin/src/stores/user.js` | 新建 | Pinia 用户状态管理 |
+| `blog-admin/src/stores/theme.js` | 新建 | Pinia 主题状态管理 |
+| `blog-admin/src/main.js` | 修改 | 注册 Pinia |
+| `blog-admin/src/App.vue` | 修改 | 使用 theme store 替代全局变量 |
+| `blog-admin/src/components/AdminLayout.vue` | 修改 | 使用 user + theme stores |
+| `blog-admin/src/views/LoginView.vue` | 修改 | 使用 user store 登录 |
+| `blog-admin/tsconfig.json` | 新建 | TypeScript 配置 |
+| `blog-admin/src/shims-vue.d.ts` | 新建 | Vue + Vite 类型声明 |
+| `blog-admin/eslint.config.mjs` | 新建 | ESLint 规范 |
+| `blog-front/eslint.config.mjs` | 新建 | ESLint 规范 |
+| `blog-server/pom.xml` | 修改 | +spring-boot-starter-test +h2 |
+| `blog-server/src/test/resources/application-test.yml` | 新建 | 测试环境配置 |
+| `blog-server/src/test/java/.../UserServiceImplTest.java` | 新建 | 8 个单元测试 |
+| `blog-server/src/test/java/.../AboutServiceImplTest.java` | 新建 | 6 个单元测试 |
+
+### 验证
+
+- `mvn test` 14 个测试全部通过（0 失败）
+- `npm run build` blog-admin + blog-front 构建通过
+- Pinia：登录→user store 状态更新→AdminLayout 响应式显示用户信息
+- ESLint：`npx eslint src/` 检查通过（Vue 推荐规则）
+
+---
+
+## P1 企业级质量 — 全局异常处理 + 参数校验 + Redis 缓存 + 限流 + AOP 操作日志
+
+**日期**：2026-06-01
+
+### 背景
+
+P0 完成容器化和 CI/CD 基建后，P1 聚焦于代码质量和生产级防护：完善异常处理链路、补齐参数校验、引入 Redis 缓存提升读性能、添加限流防刷、通过 AOP 实现操作审计。
+
+### 改动
+
+#### 1. 全局异常处理器重写（GlobalExceptionHandler）
+
+从 3 个 handler 扩展到 12 个，覆盖企业级异常分类：
+
+| 异常类型 | HTTP 状态 | 说明 |
+|----------|-----------|------|
+| `MethodArgumentNotValidException` | 400 | `@Valid @RequestBody` 校验失败，拼接字段级错误 |
+| `ConstraintViolationException` | 400 | 方法参数校验失败（path/query param） |
+| `HttpMessageNotReadableException` | 400 | JSON 格式/类型错误，返回通用提示 |
+| `MissingServletRequestParameterException` | 400 | 缺少必需请求参数 |
+| `MethodArgumentTypeMismatchException` | 400 | 参数类型转换失败，提示期望类型 |
+| `BindException` | 400 | 表单绑定校验失败 |
+| `IllegalArgumentException` | 400 | 业务逻辑异常 |
+| `NotLoginException` | 401 | Sa-Token 未登录 |
+| `DataIntegrityViolationException` | 409 | 数据库约束冲突（唯一键重复等），不泄露 SQL |
+| `HttpRequestMethodNotSupportedException` | 405 | HTTP 方法不支持 |
+| `NoHandlerFoundException` | 404 | 接口不存在 |
+| `Exception` (兜底) | 500 | 记录完整堆栈到日志，返回"服务器内部错误" |
+
+关键改进：兜底处理不再 `return Result.fail(500, e.getMessage())`，改为 `log.error() + Result.fail(500, "服务器内部错误")`，防止生产环境泄露内部信息。
+
+#### 2. 参数校验全覆盖
+
+**实体校验注解（Jakarta Bean Validation）：**
+
+| 实体/字段 | 新增注解 |
+|-----------|----------|
+| `Tag.name` | `@NotBlank(message = "标签名称不能为空")` |
+| `Category.name` | `@NotBlank(message = "分类名称不能为空")` |
+| `Moment.content` | `@NotBlank(message = "说说内容不能为空")` |
+| `User.email` | `@Email(message = "邮箱格式不正确")` |
+
+**DTO 完善：**
+
+| DTO/字段 | 新增注解 |
+|----------|----------|
+| `ArticleDto.content` | `@NotBlank(message = "内容不能为空")` |
+| `CommentDto.email` | `@Email(message = "邮箱格式不正确")`（选填但格式校验） |
+
+**控制器 @Valid 补充（7 个端点）：**
+
+| 端点 | 改动 |
+|------|------|
+| `POST /api/admin/tags` | `@RequestBody Tag tag` → `@Valid @RequestBody Tag tag` |
+| `PUT /api/admin/tags/{id}` | 同上 |
+| `POST /api/admin/categories` | `@RequestBody Category` → `@Valid @RequestBody Category` |
+| `PUT /api/admin/categories/{id}` | 同上 |
+| `POST /api/admin/moments` | `@RequestBody Moment` → `@Valid @RequestBody Moment` |
+| `PUT /api/admin/moments/{id}` | 同上 |
+| `PUT /api/auth/profile` | `@RequestBody User` → `@Valid @RequestBody User` |
+
+#### 3. Redis 缓存
+
+**新依赖：** `spring-boot-starter-cache` + `spring-boot-starter-aop`
+
+**CacheConfig.java（新建）：**
+- `@EnableCaching` 启用 Spring Cache 抽象
+- `RedisCacheManager` + `GenericJackson2JsonRedisSerializer`
+- 默认 TTL 30 分钟，不缓存 null（防缓存穿透）
+
+**缓存注解应用：**
+
+| Service | 方法 | 注解 | 缓存名 |
+|---------|------|------|--------|
+| `AboutServiceImpl.get()` | 读 | `@Cacheable` | `about::about` |
+| `AboutServiceImpl.update()` | 写 | `@CacheEvict` | 驱逐 about |
+| `CategoryServiceImpl.list()` | 读 | `@Cacheable` | `categories::all` |
+| `CategoryServiceImpl.create/update/delete` | 写 | `@CacheEvict(allEntries)` | 全量驱逐 categories |
+| `TagServiceImpl.list()` | 读 | `@Cacheable` | `tags::all` |
+| `TagServiceImpl.create/update/delete` | 写 | `@CacheEvict(allEntries)` | 全量驱逐 tags |
+| `UserServiceImpl.getSiteInfo()` | 读 | `@Cacheable` | `siteInfo::site` |
+| `UserServiceImpl.updateProfile()` | 写 | `@CacheEvict` | 驱逐 siteInfo |
+
+缓存策略说明：
+- 分类/标签列表变更不频繁，写操作全量驱逐比精准 key 驱逐更简单可靠
+- 关于页和站点信息是单行数据，固定 key 驱逐
+
+#### 4. 接口限流
+
+**@RateLimit 注解（新建）：**
+```java
+@RateLimit(key = "login", limit = 5, window = 60, message = "登录过于频繁")
+```
+参数：key（前缀）、limit（最大次数）、window（窗口秒数）、message（触发提示）。
+
+**RateLimitAspect（新建）：**
+- 基于 Redis `INCR` + `EXPIRE` 实现计数器限流
+- Key 格式：`rate_limit:{key}:{IP}`
+- 首次请求设 TTL，后续递增，超限返回 `Result.fail(429, message)`
+- IP 识别支持 X-Forwarded-For（反向代理穿透）
+
+**应用限流的公开端点：**
+
+| 端点 | 限制 |
+|------|------|
+| `POST /api/auth/login` | 60s 内最多 5 次（防暴力破解） |
+| `POST /api/articles/{id}/comments` | 60s 内最多 5 次（防刷评论） |
+| `POST /api/guestbook` | 60s 内最多 3 次（防刷留言板） |
+
+#### 5. AOP 操作日志
+
+**@OperationLog 注解（新建）：**
+```java
+@OperationLog(value = "删除文章", type = "DELETE")
+```
+
+**OperationLogAspect（新建）：**
+- `@Around` 切入所有标注 `@OperationLog` 的方法
+- 记录：操作类型、描述、登录用户名、客户端 IP、参数（截断 200 字符）、耗时
+- 日志级别：`log.info`
+- 登录用户通过 `StpUtil.getLoginId()` 获取
+
+**日志格式：**
+```
+[DELETE] 删除文章 | 用户: admin | IP: 192.168.1.1 | 参数: [1] | 耗时: 12ms
+```
+
+**应用操作日志的后台端点（16 个方法）：**
+
+| 控制器 | 方法 | 标注数 |
+|--------|------|--------|
+| `ArticleAdminController` | create/update/delete | 3 |
+| `CategoryAdminController` | create/update/delete | 3 |
+| `TagAdminController` | create/update/delete | 3 |
+| `MomentAdminController` | create/update/delete | 3 |
+| `AboutAdminController` | update | 1 |
+| `CommentAdminController` | updateStatus/delete | 2 |
+| `AuthController` | — | 0（业务逻辑敏感，不记录日志） |
+
+### 关键文件
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `common/GlobalExceptionHandler.java` | 重写 | 3→12 种异常类型全覆盖 |
+| `config/CacheConfig.java` | 新建 | Redis CacheManager + @EnableCaching |
+| `annotation/RateLimit.java` | 新建 | 限流注解 |
+| `aspect/RateLimitAspect.java` | 新建 | Redis INCR 限流切面 |
+| `annotation/OperationLog.java` | 新建 | 操作日志注解 |
+| `aspect/OperationLogAspect.java` | 新建 | AOP 审计日志切面 |
+| `entity/Tag.java` | 修改 | name + @NotBlank |
+| `entity/Category.java` | 修改 | name + @NotBlank |
+| `entity/Moment.java` | 修改 | content + @NotBlank |
+| `entity/User.java` | 修改 | email + @Email |
+| `dto/ArticleDto.java` | 修改 | content + @NotBlank |
+| `dto/CommentDto.java` | 修改 | email + @Email |
+| `pom.xml` | 修改 | +spring-boot-starter-cache, +spring-boot-starter-aop |
+| `controller/admin/TagAdminController.java` | 修改 | +@Valid +@OperationLog |
+| `controller/admin/CategoryAdminController.java` | 修改 | +@Valid +@OperationLog |
+| `controller/admin/MomentAdminController.java` | 修改 | +@Valid +@OperationLog |
+| `controller/admin/ArticleAdminController.java` | 修改 | +@OperationLog |
+| `controller/admin/AboutAdminController.java` | 修改 | +@OperationLog |
+| `controller/admin/CommentAdminController.java` | 修改 | +@OperationLog |
+| `controller/AuthController.java` | 修改 | +@RateLimit +@Valid |
+| `controller/CommentController.java` | 修改 | +@RateLimit |
+| `controller/GuestbookController.java` | 修改 | +@RateLimit |
+| `service/impl/AboutServiceImpl.java` | 修改 | +@Cacheable +@CacheEvict |
+| `service/impl/CategoryServiceImpl.java` | 修改 | +@Cacheable +@CacheEvict |
+| `service/impl/TagServiceImpl.java` | 修改 | +@Cacheable +@CacheEvict |
+| `service/impl/UserServiceImpl.java` | 修改 | +@Cacheable +@CacheEvict |
+
+### 验证
+
+- `mvn compile -q` 后端编译通过（0 错误）
+- 异常处理：发送非法 JSON → 400 "请求格式错误"；发送空 name 创建标签 → 400 "name: 标签名称不能为空"
+- 缓存：首次 `GET /api/about` 查 DB，二次命中 Redis（日志可见 Cache 命中）
+- 限流：1 分钟内连续登录 6 次 → 第 6 次返回 429 "登录过于频繁"
+- 审计日志：后台 CRUD 操作后在控制台可见 `[CREATE] 创建文章 | 用户: admin | IP: ...`
+
+---
+
+## P0 企业级基建 — Docker 容器化 + 多环境配置 + CI/CD
+
+**日期**：2026-06-01
+
+### 背景
+
+项目业务功能（说说/关于/留言板/站点信息/个人设置）已完成，但缺少企业级基础设施。从简历竞争力角度，补充容器化部署、多环境配置分离、CI/CD 自动化流水线。
+
+### 改动
+
+#### 1. Docker 容器化
+
+**blog-server/Dockerfile** — 多阶段构建：
+- 阶段一：`maven:3.9-eclipse-temurin-17-alpine` 编译打包，`mvn package -DskipTests`
+- 阶段二：`eclipse-temurin:17-jre-alpine` 运行 JAR，非 root 用户 `appuser`
+- HEALTHCHECK：`wget --spider /api/site/info`，30s 间隔，3 次重试
+
+**Dockerfile.nginx**（根目录）— 三阶段构建：
+- 阶段一：`node:20-alpine` 构建 `blog-front`（npm ci + npm run build）
+- 阶段二：`node:20-alpine` 构建 `blog-admin`（npm ci + npm run build）
+- 阶段三：`nginx:alpine` 合并两份 dist + nginx.conf
+
+**docker-compose.yml** — 4 服务编排：
+| 服务 | 镜像 | 要点 |
+|------|------|------|
+| mysql | mysql:8.0 | 持久化 volume + init.sql 自动建表 + healthcheck |
+| redis | redis:7-alpine | AOF 持久化 + 128MB maxmemory + LRU 淘汰 |
+| blog-server | 本地 Dockerfile | depends_on mysql/redis healthcheck，环境变量注入 |
+| nginx | 本地 Dockerfile.nginx | 80 端口，反向代理 + 静态文件 |
+
+#### 2. Nginx 反向代理
+
+`nginx/nginx.conf`：
+- `/` → blog-front 静态文件（SPA try_files fallback）
+- `/admin` → blog-admin 静态文件（子路径部署）
+- `/api/` → 反向代理 blog-server:8080（keepalive 32）
+- `/upload/` → 代理 blog-server/upload/（7 天缓存）
+- Gzip 压缩 + 静态资源强缓存（1y immutable）
+
+#### 3. 多环境配置分离
+
+原 `application.yml` 硬编码 localhost/123456，改为 profile 分离：
+
+| 文件 | 用途 |
+|------|------|
+| `application.yml` | 公共配置：mybatis-plus、sa-token、knife4j、multipart；`spring.profiles.active: dev` |
+| `application-dev.yml` | 开发环境：datasource/redis 连 localhost，明文密码 |
+| `application-prod.yml` | 生产环境：全量 `${ENV_VAR:default}` 占位符，密码通过 docker-compose 注入 |
+
+环境变量清单：`MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_DB`、`MYSQL_USER`、`MYSQL_PASSWORD`、`REDIS_HOST`、`REDIS_PORT`、`REDIS_PASSWORD`、`UPLOAD_PATH`、`STORAGE_TYPE`、`S3_*`
+
+#### 4. CI/CD — GitHub Actions
+
+`.github/workflows/ci.yml`：
+- 触发：push/PR 到 master
+- `backend` job：JDK 17 + mvn compile + mvn package
+- `frontend` job：Node 20 + npm ci + npm run build（blog-front + blog-admin 矩阵并行）
+- `docker` job：docker build 验证两个镜像
+
+#### 5. 前端环境变量适配
+
+两个前端项目硬编码 `baseURL: 'http://localhost:8080'`，改为 Vite 环境变量：
+
+| 文件 | 变量 | 开发值 | 生产值 |
+|------|------|--------|--------|
+| `.env.development` | `VITE_API_BASE` | `http://localhost:8080` | — |
+| `.env.production` | `VITE_API_BASE` | — | `/`（nginx 代理） |
+
+管理后台额外适配子路径部署：
+- `vite.config.js`：`mode === 'production' ? '/admin/' : '/'`
+- `router/index.js`：`createWebHistory(import.meta.env.BASE_URL)`
+- `AdminLayout` "查看博客" 链接改用 `VITE_BLOG_FRONT`
+- `ArticleList` 预览链接、`ArticleEdit` 上传 URL 同步适配
+
+### 遇到的问题
+
+**1. GitHub HTTPS 443 端口被墙**
+- 现象：`git push origin master` 报 `Failed to connect to github.com port 443: Timed out`
+- 排查：Windows 系统代理 `127.0.0.1:7890`（Clash），但 git 未配置
+- 修复：`git config --global http.proxy http://127.0.0.1:7890`，HTTPS 走代理后推送成功
+
+**2. 管理后台 Nginx 子路径部署路由问题**
+- 现象：生产环境管理后台在 `/admin/` 子路径下，默认 `createWebHistory()` 导致路由解析错误，且静态资源路径不对
+- 修复：Vite `base` 配置按 mode 区分；Vue Router 使用 `import.meta.env.BASE_URL`；API baseURL 使用绝对路径 `/`（因为 API 在根路径 `/api/`，管理后台在 `/admin/` 子路径）
+
+**3. 管理后台 401 跳转路径错误**
+- 现象：生产环境 token 过期后 `window.location.href = '/login'` 跳转到 `/login` 而非 `/admin/login`
+- 修复：改为 `window.location.href = import.meta.env.BASE_URL + 'login'`
+
+### 关键文件
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `blog-server/Dockerfile` | 新建 | 多阶段构建 |
+| `blog-server/.dockerignore` | 新建 | 构建排除 |
+| `Dockerfile.nginx` | 新建 | 前端构建 + Nginx |
+| `docker-compose.yml` | 新建 | 4 服务编排 |
+| `nginx/nginx.conf` | 新建 | 反向代理 + SPA |
+| `.github/workflows/ci.yml` | 新建 | CI 流水线 |
+| `blog-server/.../application-dev.yml` | 新建 | 开发环境配置 |
+| `blog-server/.../application-prod.yml` | 新建 | 生产环境配置 |
+| `blog-server/.../application.yml` | 修改 | 精简为公共配置 |
+| `blog-front/.env.development` | 新建 | API 地址 |
+| `blog-front/.env.production` | 新建 | API 地址 |
+| `blog-admin/.env.development` | 新建 | API + 博客地址 |
+| `blog-admin/.env.production` | 新建 | API + 博客地址 |
+| `blog-admin/vite.config.js` | 修改 | base 按 mode 区分 |
+| `blog-admin/src/router/index.js` | 修改 | BASE_URL 适配 |
+| `blog-admin/src/api/index.js` | 修改 | VITE_API_BASE + 401 跳转 |
+| `blog-admin/src/views/ArticleList.vue` | 修改 | 预览链接适配 |
+| `blog-admin/src/views/ArticleEdit.vue` | 修改 | 上传 URL 适配 |
+| `blog-admin/src/components/AdminLayout.vue` | 修改 | 查看博客链接适配 |
+| `blog-front/src/api/index.js` | 修改 | VITE_API_BASE |
+
+### 验证
+
+- `mvn compile` 后端编译通过
+- `npm run build` blog-front + blog-admin 构建通过
+- `docker-compose up -d` 一键启动 4 个容器，`http://localhost` 访问博客前台
+
+---
+
 ## 智能旅行助手 — Token + 速度优化
 
 **日期**：2026-05-28

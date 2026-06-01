@@ -80,10 +80,10 @@
           <div class="sidebar-footer">
             <div class="user-row">
               <div class="user-avatar">
-                <span>{{ (user.nickname || user.username || 'A').charAt(0) }}</span>
+                <span>{{ userStore.avatarLetter }}</span>
               </div>
               <div class="user-meta">
-                <span class="user-name">{{ user.nickname || user.username || 'Admin' }}</span>
+                <span class="user-name">{{ userStore.displayName || 'Admin' }}</span>
                 <span class="user-role">管理员</span>
               </div>
               <div class="status-dot" title="在线"></div>
@@ -98,11 +98,11 @@
             <span class="topbar-path">{{ pageTitle }}</span>
           </div>
           <div class="topbar-actions">
-            <button class="theme-toggle" @click="toggleTheme" :title="themeLabel">
-              <svg v-if="currentTheme === 'light'" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <button class="theme-toggle" @click="themeStore.toggle" :title="themeStore.isDark ? '切换亮色模式' : '切换暗色模式'">
+              <svg v-if="!themeStore.isDark" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             </button>
-            <a href="/" target="_blank" class="action-btn" title="查看博客">
+            <a :href="blogFrontUrl" target="_blank" class="action-btn" title="查看博客">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               <span>查看博客</span>
             </a>
@@ -120,13 +120,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getUserInfo } from '../api/index.js'
+import { useUserStore } from '../stores/user.js'
+import { useThemeStore } from '../stores/theme.js'
 
 const route = useRoute()
 const router = useRouter()
-const user = ref({})
+const userStore = useUserStore()
+const themeStore = useThemeStore()
+const blogFrontUrl = (import.meta.env.VITE_BLOG_FRONT || '') + '/'
 
 const pageTitle = computed(() => {
   const map = {
@@ -146,22 +149,12 @@ const pageTitle = computed(() => {
 
 onMounted(async () => {
   try {
-    const res = await getUserInfo()
-    user.value = res.data.data
-  } catch { logout() }
+    await userStore.fetchUserInfo()
+  } catch { userStore.logout(); router.push('/login') }
 })
 
-const currentTheme = ref(localStorage.getItem('blog-admin-theme') || 'light')
-const themeLabel = computed(() => currentTheme.value === 'light' ? '切换暗色模式' : '切换亮色模式')
-
-function toggleTheme() {
-  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
-  document.documentElement.setAttribute('data-theme', currentTheme.value)
-  localStorage.setItem('blog-admin-theme', currentTheme.value)
-}
-
 function logout() {
-  localStorage.removeItem('blog-token')
+  userStore.logout()
   router.push('/login')
 }
 </script>

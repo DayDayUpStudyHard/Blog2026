@@ -1,6 +1,7 @@
 package com.blog.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.blog.annotation.RateLimit;
 import com.blog.common.Result;
 import com.blog.dto.LoginDto;
 import com.blog.dto.PasswordDto;
@@ -27,6 +28,7 @@ public class AuthController {
 
     private final UserService userService;
 
+    @RateLimit(key = "login", limit = 5, window = 60, message = "登录过于频繁，请 1 分钟后再试")
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@Valid @RequestBody LoginDto dto) {
         User user = userService.login(dto.getUsername(), dto.getPassword());
@@ -51,7 +53,7 @@ public class AuthController {
     }
 
     @PutMapping("/profile")
-    public Result<?> updateProfile(@RequestBody User user) {
+    public Result<?> updateProfile(@Valid @RequestBody User user) {
         long userId = StpUtil.getLoginIdAsLong();
         userService.updateProfile(userId, user.getNickname(), user.getEmail(), user.getAvatar(), user.getBio(), user.getSocialLinks());
         return Result.ok();

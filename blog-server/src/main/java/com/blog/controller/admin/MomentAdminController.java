@@ -1,9 +1,11 @@
 package com.blog.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.blog.annotation.OperationLog;
 import com.blog.common.Result;
 import com.blog.entity.Moment;
 import com.blog.service.MomentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,16 +33,19 @@ public class MomentAdminController {
         return Result.ok(map);
     }
 
+    @OperationLog(value = "发布说说", type = "CREATE")
     @PostMapping
-    public Result<Moment> create(@RequestBody Moment moment) {
+    public Result<Moment> create(@Valid @RequestBody Moment moment) {
         return Result.ok(momentService.create(moment));
     }
 
+    @OperationLog(value = "更新说说", type = "UPDATE")
     @PutMapping("/{id}")
-    public Result<Moment> update(@PathVariable Long id, @RequestBody Moment moment) {
+    public Result<Moment> update(@PathVariable Long id, @Valid @RequestBody Moment moment) {
         return Result.ok(momentService.update(id, moment));
     }
 
+    @OperationLog(value = "删除说说", type = "DELETE")
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
         momentService.delete(id);

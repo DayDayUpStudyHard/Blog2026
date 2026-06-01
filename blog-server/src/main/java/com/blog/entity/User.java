@@ -1,6 +1,7 @@
 package com.blog.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -19,6 +20,7 @@ public class User {
     private String password;
     private String nickname;
     private String avatar;
+    @Email(message = "邮箱格式不正确")
     private String email;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

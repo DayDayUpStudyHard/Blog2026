@@ -1,6 +1,7 @@
 package com.blog.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.blog.annotation.RateLimit;
 import com.blog.common.Result;
 import com.blog.dto.CommentDto;
 import com.blog.entity.Comment;
@@ -35,6 +36,7 @@ public class GuestbookController {
         return Result.ok(map);
     }
 
+    @RateLimit(key = "guestbook", limit = 3, window = 60, message = "留言过于频繁，请 1 分钟后再试")
     @PostMapping
     public Result<Comment> create(@Valid @RequestBody CommentDto dto) {
         return Result.ok(commentService.createGuestbook(dto));

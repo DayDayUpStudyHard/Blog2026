@@ -4,6 +4,8 @@ import com.blog.entity.About;
 import com.blog.mapper.AboutMapper;
 import com.blog.service.AboutService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
@@ -13,6 +15,7 @@ public class AboutServiceImpl implements AboutService {
 
     private final AboutMapper aboutMapper;
 
+    @Cacheable(value = "about", key = "'about'")
     @Override
     public About get() {
         About about = aboutMapper.selectById(1L);
@@ -27,6 +30,7 @@ public class AboutServiceImpl implements AboutService {
         return about;
     }
 
+    @CacheEvict(value = "about", key = "'about'")
     @Override
     public void update(String content, String timeline) {
         About about = aboutMapper.selectById(1L);

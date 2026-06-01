@@ -1,5 +1,6 @@
 package com.blog.controller.admin;
 
+import com.blog.annotation.OperationLog;
 import com.blog.common.Result;
 import com.blog.entity.About;
 import com.blog.service.AboutService;
@@ -23,6 +24,7 @@ public class AboutAdminController {
         return Result.ok(aboutService.get());
     }
 
+    @OperationLog(value = "更新关于页面", type = "UPDATE")
     @PutMapping
     public Result<?> update(@RequestBody Map<String, String> body) {
         aboutService.update(body.get("content"), body.get("timeline"));

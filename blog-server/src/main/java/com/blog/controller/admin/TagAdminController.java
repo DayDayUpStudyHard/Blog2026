@@ -1,8 +1,10 @@
 package com.blog.controller.admin;
 
+import com.blog.annotation.OperationLog;
 import com.blog.common.Result;
 import com.blog.entity.Tag;
 import com.blog.service.TagService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,17 +20,20 @@ public class TagAdminController {
 
     private final TagService tagService;
 
+    @OperationLog(value = "创建标签", type = "CREATE")
     @PostMapping
-    public Result<Tag> create(@RequestBody Tag tag) {
+    public Result<Tag> create(@Valid @RequestBody Tag tag) {
         return Result.ok(tagService.create(tag));
     }
 
+    @OperationLog(value = "更新标签", type = "UPDATE")
     @PutMapping("/{id}")
-    public Result<Tag> update(@PathVariable Long id, @RequestBody Tag tag) {
+    public Result<Tag> update(@PathVariable Long id, @Valid @RequestBody Tag tag) {
         tag.setId(id);
         return Result.ok(tagService.update(tag));
     }
 
+    @OperationLog(value = "删除标签", type = "DELETE")
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
         tagService.delete(id);

@@ -100,7 +100,8 @@ async function fetchData() {
 }
 
 function openPreview(id) {
-  window.open(`http://localhost:5174/article/${id}`, '_blank')
+  const base = import.meta.env.VITE_BLOG_FRONT || ''
+  window.open(`${base}/article/${id}`, '_blank')
 }
 
 async function doDelete(id) {

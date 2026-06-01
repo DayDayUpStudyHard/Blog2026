@@ -1,6 +1,7 @@
 package com.blog.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 public class Moment {
     @TableId(type = IdType.AUTO)
     private Long id;
+    @NotBlank(message = "说说内容不能为空")
     private String content;
     private String image;
     @TableField(fill = FieldFill.INSERT)

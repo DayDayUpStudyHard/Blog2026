@@ -34,14 +34,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, h } from 'vue'
 import { useRouter } from 'vue-router'
-import { login } from '../api/index.js'
+import { useUserStore } from '../stores/user.js'
 
 const UserIcon = h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, innerHTML: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' })
 const LockIcon = h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, innerHTML: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>' })
 
 const router = useRouter()
+const userStore = useUserStore()
 const loading = ref(false)
 const formRef = ref(null)
 const form = reactive({ username: '', password: '' })
@@ -55,8 +56,7 @@ async function doLogin() {
   if (!valid) return
   loading.value = true
   try {
-    const res = await login(form)
-    localStorage.setItem('blog-token', res.data.data.token)
+    await userStore.login(form.username, form.password)
     router.push('/')
   } catch {} finally {
     loading.value = false

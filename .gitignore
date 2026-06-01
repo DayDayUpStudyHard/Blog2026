@@ -29,5 +29,13 @@ Thumbs.db
 # Upload
 blog-server/upload/
 
+# Docker
+blog-server/target/
+
+# Environment (keep examples)
+.env
+.env.local
+.env.*.local
+
 # Claude
 .claude/
