@@ -10,6 +10,9 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ==================== 后端构建 & 测试 ====================
   backend:
@@ -33,15 +36,8 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: 编译
-        run: ./mvnw compile -B -q
-
-      - name: 打包（跳过测试）
-        run: ./mvnw package -DskipTests -B -q
-
-      # 预留：添加测试后启用
-      # - name: 测试
-      #   run: ./mvnw test -B
+      - name: 编译 + 测试
+        run: mvn test -B
 
   # ==================== 前端构建 ====================
   frontend:
