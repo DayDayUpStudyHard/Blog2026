@@ -1,16 +1,18 @@
 package com.blog.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
 
 /**
- * Elasticsearch 客户端配置。
+ * Elasticsearch 客户端配置 — 仅在非 dev 环境激活。
  * <p>
- * 通过 {@code spring.elasticsearch.uris} 连接 ES 集群，
- * 生产环境通过环境变量注入，开发环境可选启用。
+ * 开发环境默认使用 MySQL LIKE 搜索，避免因缺少 ES 服务导致启动失败。
+ * 需要 ES 时使用 {@code -Dspring.profiles.active=dev,es} 或切换 prod 环境。
  */
 @Configuration
+@Profile("!dev")
 public class ElasticsearchConfig extends ElasticsearchConfiguration {
 
     @Override
