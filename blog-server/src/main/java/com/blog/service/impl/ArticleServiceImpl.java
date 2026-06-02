@@ -7,9 +7,10 @@ import com.blog.entity.Article;
 import com.blog.entity.ArticleTag;
 import com.blog.mapper.ArticleMapper;
 import com.blog.mapper.ArticleTagMapper;
+import com.blog.service.ArticleSearchService;
 import com.blog.service.ArticleService;
 import com.blog.service.TagService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -28,12 +29,22 @@ import java.util.Map;
  * </ul>
  */
 @Service
-@RequiredArgsConstructor
 public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleMapper articleMapper;
     private final ArticleTagMapper articleTagMapper;
     private final TagService tagService;
+    private final ArticleSearchService articleSearchService;
+
+    public ArticleServiceImpl(ArticleMapper articleMapper,
+                              ArticleTagMapper articleTagMapper,
+                              TagService tagService,
+                              @Autowired(required = false) ArticleSearchService articleSearchService) {
+        this.articleMapper = articleMapper;
+        this.articleTagMapper = articleTagMapper;
+        this.tagService = tagService;
+        this.articleSearchService = articleSearchService;
+    }
 
     @Override
     public Page<Article> getPublishedList(int page, int size, Long categoryId, String keyword) {
@@ -169,5 +180,30 @@ public class ArticleServiceImpl implements ArticleService {
     public void delete(Long id) {
         articleTagMapper.delete(new LambdaQueryWrapper<ArticleTag>().eq(ArticleTag::getArticleId, id));
         articleMapper.deleteById(id);
+    }
+
+    @Override
+    public Page<Article> search(String keyword, int page, int size) {
+        // ES 可用时委托给 ES 搜索，否则回退 MySQL LIKE
+        if (articleSearchService != null) {
+            try {
+                return articleSearchService.search(keyword, page, size);
+            } catch (Exception e) {
+                // ES 异常时静默回退 MySQL
+            }
+        }
+        // MySQL LIKE 回退
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<Article>()
+                .eq(Article::getStatus, 1)
+                .and(w -> w.like(Article::getTitle, keyword)
+                        .or().like(Article::getSummary, keyword)
+                        .or().like(Article::getContent, keyword))
+                .orderByDesc(Article::getCreateTime);
+        Page<Article> result = articleMapper.selectPage(new Page<>(page, size), wrapper);
+        result.getRecords().forEach(a -> {
+            a.setContent(null);
+            a.setTags(tagService.getByArticleId(a.getId()));
+        });
+        return result;
     }
 }

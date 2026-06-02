@@ -42,6 +42,25 @@
           <span v-for="tag in article.tags" :key="tag.id" class="tag-item">#{{ tag.name }}</span>
         </div>
       </div>
+
+      <!-- 点赞区域 -->
+      <div class="like-section">
+        <button
+          class="like-btn"
+          :class="{ 'liked': liked }"
+          @click="handleToggleLike"
+          :disabled="likeLoading"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24"
+            :fill="liked ? 'currentColor' : 'none'"
+            :stroke="liked ? 'none' : 'currentColor'"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          <span class="like-count">{{ likeCount }}</span>
+        </button>
+        <span class="like-hint" v-if="liked">感谢点赞！</span>
+      </div>
     </article>
 
     <n-empty v-else-if="!loading" description="文章不存在" />
@@ -72,7 +91,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { getArticleDetail, getArticleNav, getComments } from '../api/index.js'
+import { getArticleDetail, getArticleNav, getComments, toggleLike, getArticleLikes } from '../api/index.js'
 import CommentList from '../components/CommentList.vue'
 import BackToTop from '../components/BackToTop.vue'
 import { marked } from 'marked'
@@ -98,6 +117,11 @@ const prevArticle = ref(null)
 const nextArticle = ref(null)
 const coverHeroRef = ref(null)
 const parallaxY = ref(0)
+
+// 点赞状态
+const liked = ref(false)
+const likeCount = ref(0)
+const likeLoading = ref(false)
 
 const readingTime = computed(() => {
   const text = article.value?.content || ''
@@ -134,8 +158,33 @@ async function fetchArticle() {
     const nav = navRes.data.data
     prevArticle.value = nav.prev?.id ? nav.prev : null
     nextArticle.value = nav.next?.id ? nav.next : null
+    fetchLikes()
   }
   finally { loading.value = false }
+}
+
+async function fetchLikes() {
+  try {
+    const res = await getArticleLikes(route.params.id)
+    const data = res.data.data
+    liked.value = data.liked
+    likeCount.value = data.count
+  } catch { /* 点赞功能不可用时静默降级 */ }
+}
+
+async function handleToggleLike() {
+  if (likeLoading.value) return
+  likeLoading.value = true
+  try {
+    const res = await toggleLike(route.params.id)
+    const data = res.data.data
+    liked.value = data.liked
+    likeCount.value = data.count
+  } catch {
+    // 失败时静默忽略
+  } finally {
+    likeLoading.value = false
+  }
 }
 
 async function fetchComments() {
@@ -247,5 +296,44 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 .nav-title {
   font-size: 14px; color: #303133; font-weight: 500; line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* 点赞区域 */
+.like-section {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 24px; padding-top: 20px;
+  border-top: 1px solid #f0f2f5;
+}
+.like-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 999px; cursor: pointer;
+  border: 1.5px solid #e4e7ed; background: #fff; color: #909399;
+  font-size: 15px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none; user-select: none;
+}
+.like-btn:hover {
+  border-color: #f56c6c; color: #f56c6c;
+  box-shadow: 0 4px 16px rgba(245, 108, 108, 0.15);
+  transform: scale(1.04);
+}
+.like-btn:active { transform: scale(0.96); transition: transform 0.1s; }
+.like-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.like-btn.liked {
+  background: linear-gradient(135deg, #f56c6c, #e74c3c);
+  border-color: #e74c3c; color: #fff;
+  box-shadow: 0 2px 12px rgba(245, 108, 108, 0.3);
+}
+.like-btn.liked:hover {
+  border-color: #c0392b;
+  box-shadow: 0 6px 20px rgba(245, 108, 108, 0.25);
+}
+.like-count { font-weight: 600; min-width: 20px; text-align: center; }
+.like-hint {
+  font-size: 13px; color: #f56c6c; font-weight: 500;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 </style>

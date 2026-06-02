@@ -21,4 +21,9 @@ public interface ArticleService {
     Article create(ArticleDto dto);
     Article update(Long id, ArticleDto dto);
     void delete(Long id);
+
+    /**
+     * 全文搜索（ES 优先，不可用时回退 MySQL LIKE）。
+     */
+    Page<Article> search(String keyword, int page, int size);
 }

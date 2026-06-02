@@ -1,0 +1,16 @@
+# ============================================
+# Prometheus 配置 — Blog2026 监控
+# ============================================
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: blog2026
+
+scrape_configs:
+  - job_name: "blog-server"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["blog-server:8080"]
+        labels:
+          service: "blog2026-api"

@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.blog.common.Result;
 import com.blog.entity.Article;
 import com.blog.entity.Tag;
+import com.blog.service.ArticleLikeService;
 import com.blog.service.ArticleService;
 import com.blog.service.TagService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 前台文章接口（无需登录）：文章列表、详情、上下篇导航。
+ * 前台文章接口（无需登录）：文章列表、详情、上下篇导航、点赞、搜索。
  * <p>
  * 列表仅返回已发布(status=1)的文章；详情页会自增阅读量。
  * 列表接口返回 {@code content} 字段为空以减少传输量，详情接口返回完整内容。
@@ -26,6 +28,7 @@ public class ArticleController {
 
     private final ArticleService articleService;
     private final TagService tagService;
+    private final ArticleLikeService articleLikeService;
 
     @GetMapping
     public Result<Map<String, Object>> list(
@@ -49,5 +52,49 @@ public class ArticleController {
     @GetMapping("/{id}/nav")
     public Result<Map<String, Object>> nav(@PathVariable Long id) {
         return Result.ok(articleService.getNav(id));
+    }
+
+    // ==================== 点赞 ====================
+
+    @PostMapping("/{id}/like")
+    public Result<Map<String, Object>> toggleLike(@PathVariable Long id, HttpServletRequest request) {
+        String ip = getClientIp(request);
+        return Result.ok(articleLikeService.toggle(id, ip));
+    }
+
+    @GetMapping("/{id}/likes")
+    public Result<Map<String, Object>> getLikes(@PathVariable Long id, HttpServletRequest request) {
+        String ip = getClientIp(request);
+        return Result.ok(articleLikeService.getLikeInfo(id, ip));
+    }
+
+    // ==================== 全文搜索 ====================
+
+    @GetMapping("/search")
+    public Result<Map<String, Object>> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // 委托给 ArticleService（内部调用 ES 搜索服务）
+        Page<Article> pageResult = articleService.search(keyword, page, size);
+        Map<String, Object> map = new HashMap<>();
+        map.put("records", pageResult.getRecords());
+        map.put("total", pageResult.getTotal());
+        return Result.ok(map);
+    }
+
+    /**
+     * 获取客户端真实 IP，优先取 X-Forwarded-For 的第一个 IP。
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr();
     }
 }

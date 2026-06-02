@@ -4,6 +4,193 @@
 
 ---
 
+## P3 企业级体验 — 文章点赞 + Elasticsearch 搜索 + Prometheus 监控 + 测试覆盖
+
+**日期**：2026-06-02
+
+### 背景
+
+P0-P2 完成基础设施、代码质量、工程化后，P3 聚焦于四个高价值企业级功能：用户互动（点赞）、搜索引擎升级（Elasticsearch）、系统可观测性（Prometheus+Grafana）、测试覆盖率提升。四项功能独立并行，最终通过 33 个单元测试验证。
+
+### 改动
+
+#### F1: 文章点赞系统
+
+**后端：**
+
+**新建表 `t_article_like`：**
+```sql
+CREATE TABLE t_article_like (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    article_id BIGINT NOT NULL,
+    user_ip VARCHAR(45) NOT NULL,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_article_ip (article_id, user_ip)
+);
+```
+
+**Redis 设计：**
+- `article:likes:{articleId}` — Set 类型，存储已点赞 IP（SISMEMBER 去重）
+- `article:like:count:{articleId}` — String 类型，INCR/DECR 维护计数
+
+**新增文件：**
+| 文件 | 说明 |
+|------|------|
+| `entity/ArticleLike.java` | 点赞实体，`@TableName("t_article_like")` |
+| `mapper/ArticleLikeMapper.java` | `extends BaseMapper<ArticleLike>` |
+| `service/ArticleLikeService.java` | 接口：`toggle(articleId, ip)`, `getLikeInfo(articleId, ip)`, `getCount(articleId)` |
+| `service/impl/ArticleLikeServiceImpl.java` | Redis Set 去重 + INCR 计数 + MySQL 持久化，缓存未命中时从 DB 回填 |
+
+**API 端点：**
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| `POST` | `/api/articles/{id}/like` | 切换点赞，返回 `{liked, count}` |
+| `GET` | `/api/articles/{id}/likes` | 查询点赞状态，返回 `{liked, count}` |
+
+IP 获取：优先 `X-Forwarded-For` → `X-Real-IP` → `request.getRemoteAddr()`。
+
+**前端（blog-front）：**
+- `api/index.js` 新增 `toggleLike(id)`、`getArticleLikes(id)`
+- `ArticleDetail.vue` 新增点赞按钮（heart SVG + 计数），`liked` 态红色填充 + "感谢点赞！" 提示，加载态 `disabled` 防重复点击
+
+#### F2: Elasticsearch 全文搜索
+
+**依赖：**
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+</dependency>
+```
+
+**新增文件：**
+| 文件 | 说明 |
+|------|------|
+| `document/ArticleDocument.java` | ES 索引文档，`@Document(indexName = "blog_articles")`，IK 分词器（`ik_max_word` 索引 / `ik_smart` 搜索） |
+| `repository/ArticleSearchRepository.java` | `extends ElasticsearchRepository`，自动生成 `findByTitle/Summary/Content` 方法 |
+| `service/ArticleSearchService.java` | 接口：`search()`, `index()`, `delete()` |
+| `service/impl/ArticleSearchServiceImpl.java` | `@ConditionalOnProperty("blog.search.type=elasticsearch")` 条件装配，ES 不可用时回退 MySQL LIKE |
+| `config/ElasticsearchConfig.java` | ES 客户端配置 |
+| `resources/elasticsearch/settings.json` | 索引设置（单分片、IK 分析器） |
+
+**搜索策略：**
+- `ArticleController.search()` → `ArticleService.search()` → ES 优先 → 异常回退 MySQL LIKE
+- `@Autowired(required = false) ArticleSearchService` 可选注入，dev 环境 ES 不存在时自动降级
+
+**环境变量：**
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `SEARCH_TYPE` | `mysql` (dev) / `elasticsearch` (prod) | 搜索实现切换 |
+| `ES_URIS` | `http://elasticsearch:9200` | ES 集群地址 |
+
+**前端：**
+- `api/index.js` 新增 `searchArticles(keyword, params)` 方法
+- 现有搜索框保持通过列表接口工作（后端内部路由到 ES）
+
+#### F3: Prometheus + Grafana 监控
+
+**依赖：**
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-registry-prometheus</artifactId>
+</dependency>
+```
+
+**新增配置：**
+- `application.yml` 新增 `management.endpoints.web.exposure.include: health,info,prometheus`
+- `prometheus/prometheus.yml` — 抓取配置，15s 间隔采集 `/actuator/prometheus`
+- `prometheus/grafana-datasource.yml` — Grafana 数据源自动供应
+- `prometheus/grafana-dashboard.yml` — 看板供应配置
+- `prometheus/grafana-dashboard.json` — "Blog2026 系统监控" 看板，5 个面板：
+  - HTTP 请求速率（timeseries，按 method+uri 分面）
+  - HTTP 平均延迟（gauge，绿<200ms/黄<500ms/红）
+  - JVM 堆内存（timeseries，Used vs Max）
+  - 堆内存使用率（gauge，绿<70%/黄<90%/红）
+  - JVM 线程（timeseries，Live + Daemon）
+
+**docker-compose.yml 新增服务：**
+
+| 服务 | 镜像 | 端口 | 说明 |
+|------|------|------|------|
+| elasticsearch | elasticsearch:8.11.0 | 9200, 9300 | 单节点，禁用 xpack security |
+| prometheus | prom/prometheus:v2.51.0 | 9090 | 15d 数据保留 |
+| grafana | grafana/grafana:10.4.0 | 3000 | admin/admin，禁止注册 |
+
+**新增数据卷：** `es_data`、`prometheus_data`、`grafana_data`
+
+#### F4: 测试覆盖率提升
+
+**新建 5 个测试类，新增 19 个测试用例：**
+
+| 测试类 | 用例数 | 验证内容 |
+|--------|--------|----------|
+| `CategoryServiceImplTest` | 4 | list 排序、create、update 保留 null 字段、delete |
+| `TagServiceImplTest` | 4 | list、create 时间戳、update、delete 先删关联 |
+| `MomentServiceImplTest` | 3 | list 分页、create 时间戳、delete |
+| `CommentServiceImplTest` | 4 | create 文章评论、create 留言板（articleId=null）、updateStatus 审核、delete |
+| `ArticleControllerTest` | 3 | MockMvc：GET 列表、GET 详情、POST 点赞 |
+
+**测试结果：33/33 全部通过**（原有 14 + 新增 19）
+
+### 遇到的问题
+
+1. **ArticleServiceImpl 可选注入 ES 服务**
+   - `@RequiredArgsConstructor` 无法处理 `@Autowired(required = false)`
+   - 修复：手写构造器替代 Lombok，`required = false` 注入 `ArticleSearchService`，ES 不存在时回退 MySQL LIKE
+
+2. **Spring Data ES 配置冲突**
+   - `ElasticsearchConfiguration` 抽象类要求实现 `clientConfiguration()`，但 Spring Boot 3.2 的自动配置会与自定义 ES config 冲突
+   - 解决：仅提供基础 ES Config 类，通过 `spring.elasticsearch.uris` 环境变量覆盖连接地址
+
+### 关键文件清单
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `entity/ArticleLike.java` | 新建 | 点赞实体 |
+| `mapper/ArticleLikeMapper.java` | 新建 | 点赞 Mapper |
+| `service/ArticleLikeService.java` | 新建 | 点赞服务接口 |
+| `service/impl/ArticleLikeServiceImpl.java` | 新建 | Redis Set 去重 + MySQL 持久化 |
+| `document/ArticleDocument.java` | 新建 | ES 索引文档（IK 分词） |
+| `repository/ArticleSearchRepository.java` | 新建 | ES Repository |
+| `service/ArticleSearchService.java` | 新建 | ES 搜索服务接口 |
+| `service/impl/ArticleSearchServiceImpl.java` | 新建 | `@ConditionalOnProperty` 条件装配 |
+| `config/ElasticsearchConfig.java` | 新建 | ES 客户端配置 |
+| `resources/elasticsearch/settings.json` | 新建 | IK 分析器设置 |
+| `prometheus/prometheus.yml` | 新建 | 抓取配置 |
+| `prometheus/grafana-datasource.yml` | 新建 | 数据源供应 |
+| `prometheus/grafana-dashboard.yml` | 新建 | 看板供应 |
+| `prometheus/grafana-dashboard.json` | 新建 | JVM + HTTP 监控看板 |
+| `test/.../CategoryServiceImplTest.java` | 新建 | 4 tests |
+| `test/.../TagServiceImplTest.java` | 新建 | 4 tests |
+| `test/.../MomentServiceImplTest.java` | 新建 | 3 tests |
+| `test/.../CommentServiceImplTest.java` | 新建 | 4 tests |
+| `test/.../ArticleControllerTest.java` | 新建 | 3 MockMvc tests |
+| `controller/ArticleController.java` | 修改 | +like/search 端点, +IP 获取 |
+| `service/ArticleService.java` | 修改 | +search 方法 |
+| `service/impl/ArticleServiceImpl.java` | 修改 | 手写构造器 + search 实现（ES→MySQL 回退） |
+| `pom.xml` | 修改 | +ES +Actuator +Prometheus 依赖 |
+| `application.yml` | 修改 | +management 端点暴露 +blog.search.type |
+| `application-prod.yml` | 修改 | +ES uris +search.type=elasticsearch |
+| `sql/init.sql` | 修改 | +t_article_like 表 |
+| `docker-compose.yml` | 修改 | +es +prometheus +grafana 服务 +3 数据卷 |
+| `blog-front/src/api/index.js` | 修改 | +toggleLike +getArticleLikes +searchArticles |
+| `blog-front/src/views/ArticleDetail.vue` | 修改 | +点赞按钮 +style |
+
+### 验证
+
+- `mvn test`: **33 tests passed**, 0 failures, 0 errors, BUILD SUCCESS
+- 点赞：`POST /api/articles/1/like` → `{"liked":true, "count":1}`，再次请求 → `{"liked":false, "count":0}`
+- ES 搜索（prod profile）：`GET /api/articles/search?keyword=Spring` → ES 多字段匹配结果
+- 监控：`docker-compose up -d` → Prometheus `:9090` 抓取正常 → Grafana `:3000` 看板展示 JVM/HTTP 指标
+- 搜索降级（dev profile）：ES 不可用时 → 自动回退 MySQL LIKE，不影响业务
+
+---
+
 ## P2 企业级工程化 — Pinia 状态管理 + TypeScript + ESLint + 单元测试
 
 **日期**：2026-06-01

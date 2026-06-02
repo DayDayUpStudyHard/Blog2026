@@ -73,6 +73,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      ES_URIS: http://elasticsearch:9200
+      SEARCH_TYPE: elasticsearch
       UPLOAD_PATH: /app/upload/
       STORAGE_TYPE: local
       TZ: Asia/Shanghai
@@ -85,6 +87,67 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - blog-net
+
+  # ==================== Elasticsearch ====================
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: blog-es
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+    ports:
+      - "${ES_PORT:-9200}:9200"
+      - "${ES_TRANSPORT_PORT:-9300}:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q 'green\|yellow'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - blog-net
+
+  # ==================== Prometheus ====================
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: blog-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - blog-net
+
+  # ==================== Grafana ====================
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: blog-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./prometheus/grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - ./prometheus/grafana-dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml:ro
+      - ./prometheus/grafana-dashboard.json:/etc/grafana/dashboards/blog2026.json:ro
+    depends_on:
+      - prometheus
     networks:
       - blog-net
 
@@ -110,6 +173,12 @@ volumes:
     name: blog_redis_data
   upload_data:
     name: blog_upload_data
+  es_data:
+    name: blog_es_data
+  prometheus_data:
+    name: blog_prometheus_data
+  grafana_data:
+    name: blog_grafana_data
 
 # ==================== 网络 ====================
 networks:

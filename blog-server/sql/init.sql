@@ -73,6 +73,16 @@ CREATE TABLE IF NOT EXISTS t_moment (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 文章点赞表
+CREATE TABLE IF NOT EXISTS t_article_like (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    article_id BIGINT NOT NULL,
+    user_ip VARCHAR(45) NOT NULL COMMENT '用户 IP（支持IPv6）',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_article_id (article_id),
+    UNIQUE KEY uk_article_ip (article_id, user_ip)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- 关于页表（单行）
 CREATE TABLE IF NOT EXISTS t_about (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

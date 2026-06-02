@@ -21,8 +21,14 @@ spring:
           max-idle: 8
           min-idle: 0
 
+spring:
+  elasticsearch:
+    uris: ${ES_URIS:http://elasticsearch:9200}
+
 blog:
   upload-path: ${UPLOAD_PATH:upload/}
+  search:
+    type: ${SEARCH_TYPE:elasticsearch}
   storage:
     type: ${STORAGE_TYPE:local}
     s3:

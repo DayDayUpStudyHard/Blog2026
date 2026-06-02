@@ -41,3 +41,22 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+
+# Actuator 监控端点（Prometheus 采集用）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    health:
+      show-details: always
+
+# 搜索配置
+blog:
+  search:
+    type: ${SEARCH_TYPE:mysql}

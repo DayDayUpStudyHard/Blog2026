@@ -53,4 +53,16 @@ export function getAbout() {
   return api.get('/api/about')
 }
 
+export function toggleLike(articleId) {
+  return api.post(`/api/articles/${articleId}/like`)
+}
+
+export function getArticleLikes(articleId) {
+  return api.get(`/api/articles/${articleId}/likes`)
+}
+
+export function searchArticles(keyword, params = {}) {
+  return api.get('/api/articles/search', { params: { keyword, ...params } })
+}
+
 export default api
