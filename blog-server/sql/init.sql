@@ -1,4 +1,11 @@
 -- Blog2026 数据库初始化脚本
+--
+-- 如果已有旧版数据库，请先执行以下迁移 SQL：
+--   ALTER TABLE t_comment ADD COLUMN parent_id BIGINT NULL AFTER article_id;
+--   ALTER TABLE t_comment ADD COLUMN reply_to VARCHAR(50) NULL AFTER parent_id;
+--   CREATE TABLE IF NOT EXISTS t_operation_log ( ... );  -- 见下方完整 DDL
+-- 全新安装无需手工迁移，直接执行本脚本即可。
+
 CREATE DATABASE IF NOT EXISTS blog2026 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE blog2026;
 
@@ -197,6 +204,11 @@ INSERT INTO t_comment (article_id, author, email, content, create_time) VALUES
 (NULL, '路过的Java开发', 'java_dev@example.com', 'Spring Boot 入门教程对我帮助很大，期待更多后端实践文章！', '2024-05-12 16:30:00'),
 (NULL, '设计师小王', 'designer@example.com', '网站的配色和排版都很用心，毛玻璃效果加了不少分 👍', '2024-05-16 11:00:00'),
 (NULL, '老读者', 'reader@example.com', '从你开始写博客就一直在关注，内容越来越好了，加油！', '2024-05-20 08:15:00');
+
+-- 评论回复示例（parent_id 指向根评论，演示楼中楼功能）
+INSERT INTO t_comment (article_id, parent_id, reply_to, author, email, content, create_time) VALUES
+(1, 1, '王五', '博主', 'admin@blog.com', '谢谢支持！Spring Security 教程已在计划中~', '2024-01-16 14:00:00'),
+(1, 2, '赵六', '博主', 'admin@blog.com', '会考虑的，敬请期待！', '2024-01-18 10:00:00');
 
 -- 说说
 INSERT INTO t_moment (content, create_time) VALUES
