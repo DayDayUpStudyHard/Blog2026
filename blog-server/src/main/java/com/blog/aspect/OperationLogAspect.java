@@ -2,7 +2,9 @@ package com.blog.aspect;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.blog.annotation.OperationLog;
+import com.blog.service.OperationLogService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -13,18 +15,22 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 /**
- * 操作日志切面 — 记录后台管理操作的请求信息。
+ * 操作日志切面 — 记录后台管理操作到日志文件和数据库。
  * <p>
  * 日志格式：{@code [操作类型] 操作描述 | 用户: xxx | IP: xxx | 参数: [...] | 耗时: xxxms}
- * 仅记录 INFO 级别，生产环境可接入 ELK/阿里云 SLS。
+ * 同时通过 {@link OperationLogService} 异步写入数据库，提供审计查询能力。
  */
 @Slf4j
 @Aspect
 @Component
+@RequiredArgsConstructor
 public class OperationLogAspect {
+
+    private final OperationLogService operationLogService;
 
     @Around("@annotation(com.blog.annotation.OperationLog)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -47,13 +53,32 @@ public class OperationLogAspect {
             args = args.substring(0, 200) + "...";
         }
 
+        // 获取方法名
+        String methodName = method.getDeclaringClass().getSimpleName() + "." + method.getName();
+
         // 执行原方法
         Object result = joinPoint.proceed();
         long elapsed = System.currentTimeMillis() - start;
 
-        // 记录日志
+        // 记录到日志文件
         log.info("[{}] {} | 用户: {} | IP: {} | 参数: {} | 耗时: {}ms",
                 annotation.type(), annotation.value(), username, ip, args, elapsed);
+
+        // 异步持久化到数据库
+        try {
+            com.blog.entity.OperationLog logEntry = new com.blog.entity.OperationLog();
+            logEntry.setUsername(username);
+            logEntry.setIp(ip);
+            logEntry.setOperation(annotation.value());
+            logEntry.setType(annotation.type());
+            logEntry.setMethodName(methodName);
+            logEntry.setArgs(args);
+            logEntry.setExecutionTime(elapsed);
+            logEntry.setCreateTime(LocalDateTime.now());
+            operationLogService.save(logEntry);
+        } catch (Exception e) {
+            log.warn("Failed to persist operation log: {}", e.getMessage());
+        }
 
         return result;
     }

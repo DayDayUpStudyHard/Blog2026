@@ -39,6 +39,19 @@ Blog2026/
         └── frontend/     # Vue 3 + TypeScript
 ```
 
+## 核心功能
+
+| 模块 | 功能 |
+|------|------|
+| 文章系统 | CRUD、分类/标签、Markdown 编辑、置顶、草稿/发布、全文搜索（ES + MySQL） |
+| 评论系统 | 嵌套回复（楼中楼）、留言板、后台审核 |
+| 体验增强 | 文章点赞（按IP去重）、阅读时长估算、代码高亮（highlight.js） |
+| 站点管理 | 说说/动态、关于页（个人时间线）、站点信息、用户设置 |
+| 数据归档 | 文章按年月归档、时间轴展示 |
+| 运维审计 | 操作审计日志（AOP + 异步入库）、后台日志查询 |
+| 监控 | Prometheus + Grafana、Spring Boot Actuator |
+| 工程化 | Docker 7 服务编排、CI/CD、全局异常处理、Redis 缓存、限流、AOP 日志 |
+
 ## 快速开始
 
 ### 1. 环境要求
@@ -98,9 +111,11 @@ npm run dev
 | GET | `/api/articles/{id}` | 文章详情 (公开) |
 | GET | `/api/categories` | 分类列表 |
 | GET | `/api/tags` | 标签列表 |
-| GET | `/api/articles/{id}/comments` | 文章留言 |
-| POST | `/api/articles/{id}/comments` | 发表留言 |
+| GET | `/api/articles/{id}/comments` | 文章留言（含嵌套回复） |
+| POST | `/api/articles/{id}/comments` | 发表留言/回复 |
+| GET | `/api/articles/archive` | 文章归档（按年月分组） |
 | GET/POST/PUT/DELETE | `/api/admin/*` | 后台管理接口 (需登录) |
+| GET | `/api/admin/logs` | 操作审计日志 |
 
 ## 文件存储配置
 

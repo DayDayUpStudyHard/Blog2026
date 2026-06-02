@@ -188,7 +188,7 @@ async function handleToggleLike() {
 }
 
 async function fetchComments() {
-  const res = await getComments(route.params.id, { page: 1, size: 50 })
+  const res = await getComments(route.params.id)
   comments.value = res.data.data.records
   commentTotal.value = res.data.data.total
 }

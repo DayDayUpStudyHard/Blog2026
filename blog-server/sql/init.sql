@@ -54,10 +54,12 @@ CREATE TABLE IF NOT EXISTS t_article_tag (
     tag_id BIGINT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 留言表（article_id 为 NULL 表示留言板留言）
+-- 留言表（article_id 为 NULL 表示留言板留言，parent_id 不为 NULL 表示回复）
 CREATE TABLE IF NOT EXISTS t_comment (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     article_id BIGINT NULL,
+    parent_id BIGINT NULL COMMENT '父评论ID，NULL表示根评论',
+    reply_to VARCHAR(50) NULL COMMENT '回复目标用户昵称',
     author VARCHAR(50) NOT NULL,
     email VARCHAR(100),
     content TEXT NOT NULL,
@@ -81,6 +83,19 @@ CREATE TABLE IF NOT EXISTS t_article_like (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_article_id (article_id),
     UNIQUE KEY uk_article_ip (article_id, user_ip)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 操作日志表
+CREATE TABLE IF NOT EXISTS t_operation_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) COMMENT '操作人',
+    ip VARCHAR(45) COMMENT '操作IP',
+    operation VARCHAR(100) COMMENT '操作描述',
+    type VARCHAR(20) COMMENT '操作类型: CREATE/UPDATE/DELETE/OTHER',
+    method_name VARCHAR(200) COMMENT '方法名',
+    args TEXT COMMENT '请求参数(截断)',
+    execution_time BIGINT COMMENT '执行耗时(ms)',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 关于页表（单行）

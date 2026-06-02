@@ -67,6 +67,14 @@
                 <span class="menu-label">关于页面</span>
               </template>
             </el-menu-item>
+            <el-menu-item index="/logs">
+              <template #title>
+                <span class="menu-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </span>
+                <span class="menu-label">操作日志</span>
+              </template>
+            </el-menu-item>
             <el-menu-item index="/settings">
               <template #title>
                 <span class="menu-icon">
@@ -141,6 +149,7 @@ const pageTitle = computed(() => {
     '/comments': '留言管理',
     '/moments': '说说管理',
     '/about-page': '关于页面',
+    '/logs': '操作日志',
     '/settings': '个人设置',
   }
   if (route.path.startsWith('/articles/') && route.path.endsWith('/edit')) return '编辑文章'
@@ -246,8 +255,10 @@ function logout() {
 .menu :deep(.el-menu-item:nth-child(6).is-active)::before { background: linear-gradient(180deg, #6366f1, #818cf8); }
 .menu :deep(.el-menu-item:nth-child(7).is-active) { color: #14b8a6 !important; }
 .menu :deep(.el-menu-item:nth-child(7).is-active)::before { background: linear-gradient(180deg, #14b8a6, #5eead4); }
-.menu :deep(.el-menu-item:nth-child(8).is-active) { color: #f43f5e !important; }
-.menu :deep(.el-menu-item:nth-child(8).is-active)::before { background: linear-gradient(180deg, #f43f5e, #fb7185); }
+.menu :deep(.el-menu-item:nth-child(8).is-active) { color: #06b6d4 !important; }
+.menu :deep(.el-menu-item:nth-child(8).is-active)::before { background: linear-gradient(180deg, #06b6d4, #22d3ee); }
+.menu :deep(.el-menu-item:nth-child(9).is-active) { color: #f43f5e !important; }
+.menu :deep(.el-menu-item:nth-child(9).is-active)::before { background: linear-gradient(180deg, #f43f5e, #fb7185); }
 
 /* Footer */
 .sidebar-footer { padding: 14px 16px; border-top: 1px solid #f0f2f5; }

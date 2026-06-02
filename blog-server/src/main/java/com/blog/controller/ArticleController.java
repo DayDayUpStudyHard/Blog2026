@@ -43,6 +43,11 @@ public class ArticleController {
         return Result.ok(map);
     }
 
+    @GetMapping("/archive")
+    public Result<List<Map<String, Object>>> archive() {
+        return Result.ok(articleService.getArchive());
+    }
+
     @GetMapping("/{id}")
     public Result<Article> detail(@PathVariable Long id) {
         Article article = articleService.getDetail(id);

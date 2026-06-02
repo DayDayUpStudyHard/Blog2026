@@ -25,14 +25,11 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping
-    public Result<Map<String, Object>> list(
-            @PathVariable Long articleId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        var pageResult = commentService.getByArticleId(articleId, page, size);
+    public Result<Map<String, Object>> list(@PathVariable Long articleId) {
+        var comments = commentService.getByArticleId(articleId);
         Map<String, Object> map = new HashMap<>();
-        map.put("records", pageResult.getRecords());
-        map.put("total", pageResult.getTotal());
+        map.put("records", comments);
+        map.put("total", comments.size());
         return Result.ok(map);
     }
 

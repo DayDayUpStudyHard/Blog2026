@@ -14,4 +14,6 @@ public class CommentDto {
     private String email;
     @NotBlank(message = "内容不能为空")
     private String content;
+    private Long parentId;
+    private String replyTo;
 }

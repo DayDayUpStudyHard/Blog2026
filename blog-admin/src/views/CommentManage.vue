@@ -36,9 +36,10 @@
             <span class="content-cell">{{ row.content }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="articleId" label="类型" width="80" align="center">
+        <el-table-column label="类型" width="90" align="center">
           <template #default="{ row }">
-            <span>{{ row.articleId != null ? '文章' : '留言板' }}</span>
+            <span v-if="row.parentId != null" class="type-reply">回复</span>
+            <span v-else>{{ row.articleId != null ? '文章' : '留言板' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="100" align="center">

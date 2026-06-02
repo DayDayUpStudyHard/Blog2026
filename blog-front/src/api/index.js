@@ -25,8 +25,8 @@ export function getArticleNav(id) {
   return api.get(`/api/articles/${id}/nav`)
 }
 
-export function getComments(articleId, params) {
-  return api.get(`/api/articles/${articleId}/comments`, { params })
+export function getComments(articleId) {
+  return api.get(`/api/articles/${articleId}/comments`)
 }
 
 export function addComment(articleId, data) {
@@ -63,6 +63,10 @@ export function getArticleLikes(articleId) {
 
 export function searchArticles(keyword, params = {}) {
   return api.get('/api/articles/search', { params: { keyword, ...params } })
+}
+
+export function getArchive() {
+  return api.get('/api/articles/archive')
 }
 
 export default api

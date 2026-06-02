@@ -4,6 +4,70 @@
 
 ---
 
+## 第一波功能补完 — 评论嵌套回复 + 文章归档 + 操作审计日志
+
+**日期**：2026-06-02
+
+### 内容
+
+三项企业级功能补完，从"能用的博客"向"简历项目"迈进。
+
+**1. 评论嵌套回复（楼中楼）**
+
+- `t_comment` 表新增 `parent_id`（父评论ID）和 `reply_to`（回复目标昵称）字段
+- 后端限制单层嵌套（回复不能再有子回复），`CommentServiceImpl.create()` 新增二级嵌套校验
+- 前端 CommentList.vue 重写：每条根评论增加"回复"按钮，内联回复表单（@昵称），按 parentId 分组渲染，回复缩进显示
+- 后台 CommentManage.vue 类型列增加"回复"标识
+
+**2. 文章归档/时间轴**
+
+- ArticleMapper 新增 `getArchiveGroups`（GROUP BY year-month）和 `getArticlesByYearMonth` 两条 `@Select` 查询
+- 新增 `GET /api/articles/archive` 端点，返回按年月分组的文章列表
+- 新建 ArchiveView.vue：时间轴竖线 + 圆点 + 渐变色连接线 + 文章卡片列表
+- AppHeader 导航栏新增"归档"链接
+
+**3. 操作审计日志**
+
+- 新建 `t_operation_log` 表（操作人、IP、操作描述、类型、方法名、参数、耗时）
+- 新建 `OperationLog` 实体、Mapper、Service（`@Async` 异步写入，`CallerRunsPolicy` 兜底）
+- `BlogApplication` 加 `@EnableAsync`，新建 `AsyncConfig` 线程池配置
+- `OperationLogAspect` 改为 `@RequiredArgsConstructor` 注入 `OperationLogService`，在 SLF4J 日志后追加 DB 持久化
+- 新建 `LogController`（`GET /api/admin/logs` 分页查询 + 类型筛选）
+- 后台新增 LogView.vue（类型筛选标签、耗时颜色标识、分页），AdminLayout 侧边栏新增"操作日志"菜单（青色主题色）
+
+| 文件 | 操作 |
+|------|------|
+| `sql/init.sql` | t_comment 加 parent_id/reply_to，新建 t_operation_log |
+| `entity/Comment.java` | 加 parentId、replyTo、replies |
+| `dto/CommentDto.java` | 加 parentId、replyTo |
+| `service/CommentService.java` | getByArticleId 改为返回 List |
+| `service/impl/CommentServiceImpl.java` | 嵌套回复校验 + 查询返回全量 |
+| `controller/CommentController.java` | GET 不分页 |
+| `blog-front/.../CommentList.vue` | 回复按钮 + 内联表单 + 缩进渲染 |
+| `blog-admin/.../CommentManage.vue` | 类型列增加"回复" |
+| `mapper/ArticleMapper.java` | 2 条 @Select 归档查询 |
+| `service/ArticleService.java` | 新增 getArchive() |
+| `service/impl/ArticleServiceImpl.java` | 归档实现（分组 + 装填） |
+| `controller/ArticleController.java` | 新增 /archive 端点 |
+| `blog-front/.../ArchiveView.vue` | **新建** 时间轴归档页 |
+| `blog-front/.../AppHeader.vue` | 导航栏加"归档" |
+| `entity/OperationLog.java` | **新建** |
+| `mapper/OperationLogMapper.java` | **新建** |
+| `service/OperationLogService.java` | **新建** |
+| `service/impl/OperationLogServiceImpl.java` | **新建**（@Async） |
+| `config/AsyncConfig.java` | **新建** 异步线程池 |
+| `controller/admin/LogController.java` | **新建** |
+| `aspect/OperationLogAspect.java` | 注入 service + 持久化 |
+| `BlogApplication.java` | 加 @EnableAsync |
+| `blog-admin/.../LogView.vue` | **新建** |
+| `blog-admin/.../AdminLayout.vue` | 侧边栏加"操作日志" |
+| `blog-front/.../api/index.js` | getComments 简化 + getArchive |
+| `blog-admin/.../api/index.js` | getOperationLogs |
+| `blog-front/.../router/index.js` | /archive 路由 |
+| `blog-admin/.../router/index.js` | /logs 路由 |
+
+---
+
 ## P3 企业级体验 — 文章点赞 + Elasticsearch 搜索 + Prometheus 监控 + 测试覆盖
 
 **日期**：2026-06-02

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -205,5 +206,21 @@ public class ArticleServiceImpl implements ArticleService {
             a.setTags(tagService.getByArticleId(a.getId()));
         });
         return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> getArchive() {
+        List<Map<String, Object>> groups = articleMapper.getArchiveGroups();
+        for (Map<String, Object> group : groups) {
+            String yearMonth = (String) group.get("yearMonth");
+            List<Article> articles = articleMapper.getArticlesByYearMonth(yearMonth);
+            // 去掉 content 减少传输量
+            articles.forEach(a -> {
+                a.setContent(null);
+                a.setTags(tagService.getByArticleId(a.getId()));
+            });
+            group.put("articles", articles);
+        }
+        return groups;
     }
 }

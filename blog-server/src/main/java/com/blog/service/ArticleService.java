@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.blog.dto.ArticleDto;
 import com.blog.entity.Article;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,4 +27,9 @@ public interface ArticleService {
      * 全文搜索（ES 优先，不可用时回退 MySQL LIKE）。
      */
     Page<Article> search(String keyword, int page, int size);
+
+    /**
+     * 文章归档 — 按年月分组，每组包含文章列表。
+     */
+    List<Map<String, Object>> getArchive();
 }

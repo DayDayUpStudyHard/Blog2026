@@ -63,4 +63,6 @@ export function deleteMoment(id) { return api.delete(`/api/admin/moments/${id}`)
 export function getAbout() { return api.get('/api/admin/about') }
 export function updateAbout(data) { return api.put('/api/admin/about', data) }
 
+export function getOperationLogs(params) { return api.get('/api/admin/logs', { params }) }
+
 export default api
