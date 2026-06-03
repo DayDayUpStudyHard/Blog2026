@@ -33,9 +33,12 @@ Blog2026/
 │   └── sql/init.sql      # 数据库初始化脚本
 ├── blog-admin/           # 管理后台 (Vue 3)
 ├── blog-front/           # 博客前台 (Vue 3)
+├── tests/                # pytest API 自动化测试
 └── tools/                # 小工具平台
-    └── travel-assistant/ # 智能旅行助手
-        ├── backend/      # Python FastAPI
+    ├── travel-assistant/ # 智能旅行助手
+    │   ├── backend/      # Python FastAPI
+    │   └── frontend/     # Vue 3 + TypeScript
+    └── crypto-toolbox/   # 加密解密工具箱
         └── frontend/     # Vue 3 + TypeScript
 ```
 
@@ -343,3 +346,65 @@ cd tools/crypto-toolbox/frontend
 npm install
 npm run dev             # → http://localhost:5176
 ```
+
+## API 自动化测试
+
+基于 pytest + requests 的黑盒测试框架，覆盖全部公开接口、认证流程和后台管理 CRUD。
+
+| 层级 | 技术 |
+|------|------|
+| 测试框架 | pytest 9.x |
+| HTTP 客户端 | requests (Session 复用) |
+| 断言风格 | 原生 assert + 自定义辅助函数 |
+| Fixtures | base_url, session, admin_token, auth_headers, test_data_tracker |
+| 标记体系 | smoke / public / auth / admin / slow |
+
+**项目结构：**
+
+```
+tests/
+├── requirements.txt       # pytest + requests
+├── pytest.ini             # 配置、markers、addopts
+├── conftest.py            # 公共 fixtures + 断言辅助 + 测试数据清理
+├── test_public.py         # 公开接口 — 21 tests（文章/分类/标签/说说/评论/留言板）
+├── test_auth.py           # 认证接口 — 8 tests（登录/用户信息/改密/改资料）
+└── test_admin.py          # 后台管理 — 30 tests（CRUD + 审核 + 日志 + 未授权拦截）
+```
+
+**测试覆盖（59 tests）：**
+
+| 模块 | 测试数 | 覆盖接口 |
+|------|--------|----------|
+| `test_public.py` | 21 | `GET /api/articles` 列表/详情/导航/归档、`POST /like` / `GET /likes`、`GET /search`、分类、标签、说说、关于、站点、评论 CR、留言板 CR |
+| `test_auth.py` | 8 | `POST /login`（成功/错误密码/空字段）、`GET /info`（无 token/有 token）、`PUT /password`、`PUT /profile` |
+| `test_admin.py` | 30 | Article/Tag/Category/Moment CRUD、Comment 列表/审核、About 管理、操作日志、无权限拦截 |
+
+**运行：**
+
+```bash
+cd tests
+pip install -r requirements.txt
+
+# 冒烟测试（仅公开接口）
+pytest -m public
+
+# 全部测试
+pytest
+
+# 跳过 DB 写入测试
+pytest -m "not slow"
+
+# 指定后端地址
+BLOG_BASE_URL=http://localhost:8080 pytest
+
+# 并行加速
+pytest -n auto
+```
+
+**测试结果示例：**
+
+```
+======================== 52 passed, 7 xfailed in 1.18s ========================
+```
+
+> 7 个 `xfail` 为预期失败 — 标记了后台 `/api/admin/**` 路由缺少 Sa-Token 登录保护的已知安全问题，待修复后移除 xfail。
