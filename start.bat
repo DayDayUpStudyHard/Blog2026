@@ -20,8 +20,11 @@ start "Blog2026-Front" cmd /k "title Blog2026-Front && cd /d %~dp0blog-front && 
 echo [4/5] Starting travel backend (FastAPI :8001) ...
 start "Travel-Backend" cmd /k "title Travel-Backend && cd /d %~dp0tools\travel-assistant\backend && pip install -r requirements.txt -q && python run.py"
 
-echo [5/5] Starting travel frontend (Vite :5175) ...
+echo [5/6] Starting travel frontend (Vite :5175) ...
 start "Travel-Frontend" cmd /k "title Travel-Frontend && cd /d %~dp0tools\travel-assistant\frontend && npm install && npm run dev"
+
+echo [6/6] Starting crypto toolbox (Vite :5176) ...
+start "Crypto-Toolbox" cmd /k "title Crypto-Toolbox && cd /d %~dp0tools\crypto-toolbox\frontend && npm install && npm run dev"
 
 echo.
 echo ==============================
@@ -31,6 +34,7 @@ echo     Admin:             http://localhost:5173
 echo     Front:             http://localhost:5174
 echo     Travel Backend:    http://localhost:8001
 echo     Travel Frontend:   http://localhost:5175
+echo     Crypto Toolbox:    http://localhost:5176
 echo ==============================
 echo.
 echo Close each window to stop the service.

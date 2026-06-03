@@ -293,3 +293,53 @@ npm run dev             # → http://localhost:5175
 | `LLM_MODEL` | 模型名称（默认 deepseek-chat） |
 | `AMAP_API_KEY` | 高德地图 Web API 密钥 |
 | `UNSPLASH_ACCESS_KEY` | Unsplash API 访问密钥 |
+
+### 加密解密工具箱
+
+MD5 / SHA / AES / Base64 / URL 编解码，纯前端运行，数据不上传。
+
+| 层级 | 技术 |
+|------|------|
+| 前端框架 | Vue 3 + TypeScript |
+| UI 组件 | Ant Design Vue 4 |
+| 加密库 | crypto-js 4.x |
+| 构建工具 | Vite 5 |
+
+**项目结构：**
+
+```
+tools/crypto-toolbox/
+└── frontend/
+    ├── vite.config.ts             # port 5176
+    ├── package.json
+    └── src/
+        ├── main.ts                # Vue app 入口
+        ├── App.vue
+        ├── router/index.ts        # 路由配置
+        └── views/
+            └── Home.vue           # 5 个 Tab 的完整实现
+```
+
+**5 个工具模块：**
+
+| Tab | 功能 | 算法 |
+|-----|------|------|
+| MD5 | 文本 → MD5 哈希 | `CryptoJS.MD5()` |
+| SHA | SHA-1 / SHA-256 / SHA-512 可选 | `CryptoJS.SHA1/256/512()` |
+| AES | 对称加解密，密钥 + 明文/密文双向 | `CryptoJS.AES.encrypt/decrypt()` |
+| Base64 | UTF-8 ↔ Base64 编解码 | `CryptoJS.enc.Base64` |
+| URL | URL 编解码 | `encodeURIComponent/decodeURIComponent` |
+
+**特点：**
+
+- **纯前端**：所有运算在浏览器本地完成，数据零上传
+- **一键复制**：每个结果带复制按钮
+- **错误处理**：解密/解码失败有明确错误提示（密钥错误、格式非法等）
+
+**启动：**
+
+```bash
+cd tools/crypto-toolbox/frontend
+npm install
+npm run dev             # → http://localhost:5176
+```

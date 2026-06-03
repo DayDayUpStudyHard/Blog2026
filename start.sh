@@ -28,8 +28,12 @@ echo "[4/5] 启动旅行助手后端..."
 (cd "$ROOT/tools/travel-assistant/backend" && pip install -r requirements.txt -q && python run.py) &
 
 # 5. 启动旅行助手前端 (Vue 3 + Ant Design Vue)
-echo "[5/5] 启动旅行助手前端..."
+echo "[5/6] 启动旅行助手前端..."
 (cd "$ROOT/tools/travel-assistant/frontend" && npm install && npm run dev) &
+
+# 6. 启动加密解密工具箱 (Vue 3 + Ant Design Vue)
+echo "[6/6] 启动加密解密工具箱..."
+(cd "$ROOT/tools/crypto-toolbox/frontend" && npm install && npm run dev) &
 
 echo ""
 echo "=============================="
@@ -41,6 +45,7 @@ echo "  管理后台:        http://localhost:5173  (admin/admin123)"
 echo "  博客前台:        http://localhost:5174"
 echo "  旅行助手后端:    http://localhost:8001"
 echo "  旅行助手前端:    http://localhost:5175"
+echo "  加密解密工具箱:  http://localhost:5176"
 echo ""
 echo "  按 Ctrl+C 停止所有服务"
 echo "=============================="
