@@ -229,11 +229,11 @@ IP 获取：优先 `X-Forwarded-For` → `X-Real-IP` → `request.getRemoteAddr(
 | `prometheus/grafana-datasource.yml` | 新建 | 数据源供应 |
 | `prometheus/grafana-dashboard.yml` | 新建 | 看板供应 |
 | `prometheus/grafana-dashboard.json` | 新建 | JVM + HTTP 监控看板 |
-| `test/.../CategoryServiceImplTest.java` | 新建 | 4 tests |
-| `test/.../TagServiceImplTest.java` | 新建 | 4 tests |
-| `test/.../MomentServiceImplTest.java` | 新建 | 3 tests |
-| `test/.../CommentServiceImplTest.java` | 新建 | 4 tests |
-| `test/.../ArticleControllerTest.java` | 新建 | 3 MockMvc tests |
+| `src/test/java/.../CategoryServiceImplTest.java` | 新建 | 4 tests |
+| `src/test/java/.../TagServiceImplTest.java` | 新建 | 4 tests |
+| `src/test/java/.../MomentServiceImplTest.java` | 新建 | 3 tests |
+| `src/test/java/.../CommentServiceImplTest.java` | 新建 | 4 tests |
+| `src/test/java/.../ArticleControllerTest.java` | 新建 | 3 MockMvc tests |
 | `controller/ArticleController.java` | 修改 | +like/search 端点, +IP 获取 |
 | `service/ArticleService.java` | 修改 | +search 方法 |
 | `service/impl/ArticleServiceImpl.java` | 修改 | 手写构造器 + search 实现（ES→MySQL 回退） |
@@ -252,6 +252,71 @@ IP 获取：优先 `X-Forwarded-For` → `X-Real-IP` → `request.getRemoteAddr(
 - ES 搜索（prod profile）：`GET /api/articles/search?keyword=Spring` → ES 多字段匹配结果
 - 监控：`docker-compose up -d` → Prometheus `:9090` 抓取正常 → Grafana `:3000` 看板展示 JVM/HTTP 指标
 - 搜索降级（dev profile）：ES 不可用时 → 自动回退 MySQL LIKE，不影响业务
+
+---
+
+## pytest API 黑盒测试框架 — HTTP 集成测试
+
+**日期**：2026-06-02
+
+### 背景
+
+`blog-server/src/test/` 下的 Java 测试（JUnit 5 + Mockito + H2）覆盖了 Service 层内部逻辑，但缺少对真实 HTTP 接口的端到端验证。新建 `api-tests/` 目录，用 pytest + requests 从外部黑盒测试所有 API 端点，与 Java 单元测试互补。
+
+### 测试套件结构
+
+```
+api-tests/
+├── requirements.txt       # pytest>=8.0 + requests>=2.31
+├── pytest.ini             # markers: smoke/public/auth/admin/slow
+├── conftest.py            # fixtures: base_url, session, admin_token, auth_headers, test_data_tracker
+├── test_public.py         # 公开接口 — 21 tests
+├── test_auth.py           # 认证接口 — 8 tests
+└── test_admin.py          # 后台管理 — 30 tests
+```
+
+### 覆盖范围（59 tests）
+
+| 文件 | 测试数 | 覆盖接口 |
+|------|--------|----------|
+| `test_public.py` | 21 | 文章列表/详情/导航/归档、点赞、搜索、分类、标签、说说、关于、站点、评论、留言板 |
+| `test_auth.py` | 8 | 登录（成功/错误密码/空字段）、用户信息、改密、改资料 |
+| `test_admin.py` | 30 | Article/Category/Tag/Moment CRUD、Comment 审核、About 管理、操作日志、未授权拦截 |
+
+### 关键设计
+
+- **Session 复用**：`requests.Session()` session 级 fixture，TCP 连接复用
+- **测试数据自动清理**：`test_data_tracker` fixture 追踪创建的资源 ID，teardown 时逆序删除（避免外键约束）
+- **限流感知**：`test_login_success` 遇到 429 自动 `pytest.skip`
+- **容错断言**：多个接口接受 200/400 两种响应码（适配不同版本的服务端行为）
+
+### 发现的安全问题
+
+7 个测试标记为 `xfail`：后台 `/api/admin/**` 路由未被 Sa-Token 拦截保护，未登录即可访问所有管理接口。
+
+```
+XFAIL: BUG: Sa-Token 未拦截 /api/admin/** 路由，后台接口无登录保护
+```
+
+### 测试结果
+
+```
+======================== 52 passed, 7 xfailed in 1.18s ========================
+```
+
+### 两套测试对比
+
+| 维度 | Java (`src/test/`) | Python (`api-tests/`) |
+|------|-------------------|----------------------|
+| 测试方式 | 单元测试 + MockMvc 切片 | HTTP 黑盒集成测试 |
+| 框架 | JUnit 5 + Mockito + H2 | pytest + requests |
+| 关注层 | Service 内部逻辑 | HTTP 接口端到端 |
+| 测试数 | 32 | 30（+7 xfail） |
+| 后台覆盖 | 无 | 完整 CRUD |
+| 搜索/归档/日志 | 无 | 有 |
+| 空值/upsert 语义 | 有 | 无（黑盒不可见） |
+
+> **结论：两套测试互补，不重复。** Java 测"内部怎么算"，Python 测"对外怎么响应"。
 
 ---
 

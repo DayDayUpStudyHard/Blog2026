@@ -30,10 +30,11 @@ Blog2026/
 │   │   └── service/      # 业务层
 │   ├── src/main/resources/
 │   │   └── application.yml
+│   ├── src/test/java/     # Java 单元测试 (JUnit 5 + Mockito)
 │   └── sql/init.sql      # 数据库初始化脚本
 ├── blog-admin/           # 管理后台 (Vue 3)
 ├── blog-front/           # 博客前台 (Vue 3)
-├── tests/                # pytest API 自动化测试
+├── api-tests/            # Python HTTP 集成测试（pytest 黑盒）
 └── tools/                # 小工具平台
     ├── travel-assistant/ # 智能旅行助手
     │   ├── backend/      # Python FastAPI
@@ -347,9 +348,9 @@ npm install
 npm run dev             # → http://localhost:5176
 ```
 
-## API 自动化测试
+## API 黑盒测试（Python）
 
-基于 pytest + requests 的黑盒测试框架，覆盖全部公开接口、认证流程和后台管理 CRUD。
+基于 pytest + requests 的 HTTP 集成测试，连真实服务器验证全部公开接口、认证流程和后台管理 CRUD。与 `blog-server/src/test/` 下的 Java 单元测试（JUnit 5 + Mockito，测 Service 层内部逻辑）互补，两者不重复。
 
 | 层级 | 技术 |
 |------|------|
@@ -362,7 +363,7 @@ npm run dev             # → http://localhost:5176
 **项目结构：**
 
 ```
-tests/
+api-tests/
 ├── requirements.txt       # pytest + requests
 ├── pytest.ini             # 配置、markers、addopts
 ├── conftest.py            # 公共 fixtures + 断言辅助 + 测试数据清理
@@ -382,7 +383,7 @@ tests/
 **运行：**
 
 ```bash
-cd tests
+cd api-tests
 pip install -r requirements.txt
 
 # 冒烟测试（仅公开接口）
