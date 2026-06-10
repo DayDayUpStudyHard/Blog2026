@@ -193,6 +193,31 @@ blog:
 > - MinIO 默认使用路径样式访问（`forcePathStyle: true`），代码已启用此选项
 > - Bucket 需在 MinIO Console 中提前创建并设为 public 访问
 
+### 图片压缩与缩略图
+
+上传图片时自动处理（纯 JDK `javax.imageio` + `java.awt`，零外部依赖）：
+
+| 处理 | 说明 |
+|------|------|
+| **压缩** | 宽度 > 1920px 或高度 > 1920px 时等比缩放至阈值内，JPEG 质量 80% |
+| **缩略图** | 生成 400px 宽等比缩略图，文件名加 `_thumb` 后缀 |
+| **GIF** | 动图跳过压缩（防动画丢失），仅生成静态缩略图 |
+| **非图片** | 直接存储，不做处理 |
+
+API 返回格式（图片文件额外包含 `thumbUrl`）：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "url": "/upload/abc123.jpg",
+    "thumbUrl": "/upload/abc123_thumb.jpg"
+  }
+}
+```
+
+> 实现类：[`ImageUtil.java`](blog-server/src/main/java/com/blog/util/ImageUtil.java) — 静态工具方法，JPEG 使用 `ImageWriter` 精确控制压缩质量，PNG/BMP 保持原格式。
+
 ## 小工具平台
 
 博客右下角浮窗提供小工具入口，hover 弹出工具列表，点击在全屏 Modal 中通过 iframe 加载。各工具独立部署，前后端分离。

@@ -2,7 +2,9 @@ package com.blog.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.blog.config.FileStorageConfig;
+import com.blog.dto.StoreResult;
 import com.blog.service.FileStorageService;
+import com.blog.util.ImageUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +23,9 @@ import java.net.URI;
  * <p>
  * 通过 {@code blog.storage.type=s3} 激活，S3Client 在构造时创建，
  * 存储路径为 {@code blog/<uuid>.<ext>}，返回公开访问 URL。
+ * <p>
+ * 图片上传自动压缩（>1920px 等比缩放至 1920px）+ 生成 400px 缩略图；
+ * GIF 动图跳过压缩但生成静态缩略图；非图片文件直接存储。
  */
 @Service
 @ConditionalOnProperty(name = "blog.storage.type", havingValue = "s3")
@@ -42,23 +47,52 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
-    public String store(MultipartFile file) throws IOException {
-        var s3 = config.getS3();
+    public StoreResult store(MultipartFile file) throws IOException {
         String originalName = file.getOriginalFilename();
         String ext = "";
         if (originalName != null && originalName.contains(".")) {
-            ext = originalName.substring(originalName.lastIndexOf("."));
+            ext = originalName.substring(originalName.lastIndexOf(".")).toLowerCase();
         }
-        String key = "blog/" + IdUtil.fastSimpleUUID() + ext;
+        String baseName = IdUtil.fastSimpleUUID();
 
+        // 读取原始字节
+        byte[] rawBytes = file.getBytes();
+        String contentType = file.getContentType();
+
+        // 非图片 → 直接上传
+        if (!ImageUtil.isImage(originalName)) {
+            String key = "blog/" + baseName + ext;
+            putObject(key, rawBytes, contentType);
+            return StoreResult.of(publicUrl(key));
+        }
+
+        // 图片 → 压缩 + 缩略图
+        String format = ImageUtil.format(originalName);
+        byte[] compressed = ImageUtil.compress(rawBytes, format);
+        byte[] thumb = ImageUtil.thumbnail(rawBytes, format);
+
+        // 上传压缩后主图
+        String mainKey = "blog/" + baseName + ext;
+        putObject(mainKey, compressed, contentType);
+
+        // 上传缩略图
+        String thumbKey = "blog/" + baseName + "_thumb" + ext;
+        putObject(thumbKey, thumb, contentType);
+
+        return StoreResult.of(publicUrl(mainKey), publicUrl(thumbKey));
+    }
+
+    void putObject(String key, byte[] bytes, String contentType) {
         PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(s3.getBucket())
+                .bucket(config.getS3().getBucket())
                 .key(key)
-                .contentType(file.getContentType())
+                .contentType(contentType)
                 .build();
+        client.putObject(request, RequestBody.fromBytes(bytes));
+    }
 
-        client.putObject(request, RequestBody.fromBytes(file.getBytes()));
-
+    private String publicUrl(String key) {
+        var s3 = config.getS3();
         if (s3.getPublicUrl() != null && !s3.getPublicUrl().isBlank()) {
             return s3.getPublicUrl() + "/" + key;
         }

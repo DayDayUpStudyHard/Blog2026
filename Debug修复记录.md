@@ -4,7 +4,76 @@
 
 ---
 
-## 第一波功能补完 — 评论嵌套回复 + 文章归档 + 操作审计日志
+## 图片上传压缩与缩略图
+
+**日期**：2026-06-10
+
+### 背景
+
+上传图片直接存储原图，没有压缩 — 手机拍照动辄 4000+ px、5MB+，导致：
+- 文章列表页加载慢（详情图也走原图）
+- 存储空间浪费
+- 没有缩略图，列表/卡片场景无法用小图预览
+
+### 改动
+
+**新建文件：**
+
+| 文件 | 说明 |
+|------|------|
+| `util/ImageUtil.java` | 图片压缩 + 缩略图工具，纯 JDK 实现（`javax.imageio` + `java.awt`），零外部依赖 |
+| `dto/StoreResult.java` | 存储结果 DTO，包含 `url` + `thumbUrl`（非图片 `thumbUrl=null`） |
+
+**修改文件：**
+
+| 文件 | 改动 |
+|------|------|
+| `service/FileStorageService.java` | `store()` 返回类型 `String` → `StoreResult` |
+| `service/impl/LocalFileStorageService.java` | `store()` 增加图片检测 → 压缩 → 缩略图生成 → 双文件写入 |
+| `service/impl/S3FileStorageService.java` | 同上，S3 路径上传主图 + `_thumb` 缩略图 |
+| `controller/UploadController.java` | 适配 `StoreResult`，响应中追加 `thumbUrl` 字段 |
+
+### 设计细节
+
+**压缩策略：**
+- 宽度 > 1920px 或高度 > 1920px → 等比缩放至阈值内
+- 已小于阈值的图片跳过缩放（仍做 JPEG 重编码优化体积）
+- JPEG 使用 `ImageWriter` + `MODE_EXPLICIT` 精确控制质量 80%
+- PNG/BMP 使用 `ImageIO.write` 保持原格式
+
+**缩略图策略：**
+- 固定 400px 宽等比缩放
+- 文件名加 `_thumb` 后缀（如 `abc123_thumb.jpg`）
+- GIF 取第一帧生成静态缩略图
+
+**边界处理：**
+- GIF 动图跳过压缩（防止动画丢失），仅生成静态缩略图
+- 非图片文件（文档等）直接存储，`thumbUrl=null`
+- 压缩失败静默回退原始字节（不阻塞上传）
+- 有透明通道的 PNG 保持 ARGB 色彩空间
+
+**API 兼容：**
+- `POST /api/upload` 响应新增 `thumbUrl` 字段（向后兼容）
+- 原有 `url` 字段不变，前端无需修改即可正常工作
+
+### 关键文件
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `util/ImageUtil.java` | **新建** | 压缩 + 缩略图，JPEG Quality 80%，BICUBIC 插值 |
+| `dto/StoreResult.java` | **新建** | 存储结果 DTO |
+| `service/FileStorageService.java` | 修改 | 返回值改为 StoreResult |
+| `service/impl/LocalFileStorageService.java` | 修改 | 压缩 + 缩略图写入 |
+| `service/impl/S3FileStorageService.java` | 修改 | 压缩 + 缩略图上传 S3 |
+| `controller/UploadController.java` | 修改 | 响应增加 thumbUrl |
+
+### 验证
+
+- `mvn test`：**33 tests passed**，0 failures，BUILD SUCCESS
+- 预期效果：上传 4000px 照片 → 压缩至 1920px + 生成 400px 缩略图
+- 非图片文件：正常存储，`thumbUrl` 为 null
+
+---
 
 **日期**：2026-06-02
 

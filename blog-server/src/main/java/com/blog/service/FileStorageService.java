@@ -1,5 +1,6 @@
 package com.blog.service;
 
+import com.blog.dto.StoreResult;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
@@ -8,7 +9,8 @@ import java.io.IOException;
  * <p>
  * 实现类通过 {@code @ConditionalOnProperty("blog.storage.type")} 条件装配：
  * {@code local} → {@code LocalFileStorageService}，{@code s3} → {@code S3FileStorageService}。
+ * 图片上传自动压缩（>1920px 等比缩放）+ 生成 400px 缩略图；非图片文件只存储不处理。
  */
 public interface FileStorageService {
-    String store(MultipartFile file) throws IOException;
+    StoreResult store(MultipartFile file) throws IOException;
 }
