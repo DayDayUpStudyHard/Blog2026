@@ -55,6 +55,7 @@ Blog2026/
 | 运维审计 | 操作审计日志（AOP + 异步入库）、后台日志查询 |
 | 监控 | Prometheus + Grafana、Spring Boot Actuator |
 | 工程化 | Docker 7 服务编排、CI/CD、全局异常处理、Redis 缓存、限流、AOP 日志 |
+| 缓存防护 | 三级防护体系 — 防穿透（空值缓存）、防雪崩（随机TTL）、防击穿（Redisson分布式锁） |
 
 ## 快速开始
 
@@ -217,6 +218,34 @@ API 返回格式（图片文件额外包含 `thumbUrl`）：
 ```
 
 > 实现类：[`ImageUtil.java`](blog-server/src/main/java/com/blog/util/ImageUtil.java) — 静态工具方法，JPEG 使用 `ImageWriter` 精确控制压缩质量，PNG/BMP 保持原格式。
+
+## 缓存防护体系
+
+在 Spring Cache 基础上自研三级防护，替代原生 `@Cacheable`/`@CacheEvict` 注解。
+
+| 问题 | 方案 | 技术实现 |
+|------|------|----------|
+| **缓存穿透**（查不存在的数据，每次都打 DB） | 缓存空值标记 | DB 返回 null → 缓存 `__NULL__` 标记，短 TTL 5min |
+| **缓存雪崩**（大量缓存同时过期，瞬时 DB 压力） | 随机 TTL | 实际 TTL = 基础值 + random(0, 浮动值)，如 30min + random(0~10) |
+| **缓存击穿**（热点 key 过期，大量线程抢建缓存） | 分布式互斥锁 | Redisson `tryLock` → 双检缓存 → 单线程重建 → 释放，未抢到锁的线程等 100ms 重试缓存 |
+
+**设计**：
+
+- 自定义 `@CacheShield` 注解替代 `@Cacheable`，`@CacheShieldEvict` 替代 `@CacheEvict`
+- AOP 切面 `CacheShieldAspect` 统一拦截，直接操作 `RedisTemplate`（完全绕过 Spring Cache 抽象）
+- Redisson 分布式锁做热点 key 互斥重建的仲裁
+- 锁等待超时 3s，持有超时 30s，抢不到锁降级查 DB
+
+**应用范围**：
+
+| 缓存名 | Key | TTL | 标注方法 |
+|--------|-----|-----|----------|
+| `about` | `about::about` | 30+0~10min | `AboutServiceImpl.get()` |
+| `categories` | `categories::all` | 30+0~10min | `CategoryServiceImpl.list()` |
+| `tags` | `tags::all` | 30+0~10min | `TagServiceImpl.list()` |
+| `siteInfo` | `siteInfo::site` | 30+0~10min | `UserServiceImpl.getSiteInfo()` |
+
+> `pom.xml` 依赖：`redisson-spring-boot-starter 3.32.0`。Redisson 连接参数复用 `spring.data.redis.*` 配置，与 Spring Data Redis 共享同一 Redis 实例。
 
 ## 小工具平台
 

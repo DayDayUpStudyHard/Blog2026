@@ -4,7 +4,100 @@
 
 ---
 
-## 图片上传压缩与缩略图
+## 缓存三级防护 — 防穿透 + 防雪崩 + 防击穿
+
+**日期**：2026-07-03
+
+### 背景
+
+当前缓存直接使用 Spring `@Cacheable`/`@CacheEvict`，固定 TTL 30 分钟 — 虽然"能用"，但缺少分布式场景下的经典三层防护：缓存穿透（大量非法 key 打穿缓存）、缓存雪崩（批量 key 同时过期压垮 DB）、缓存击穿（热点 key 过期瞬时高并发抢建）。这三点是面试中最常被深挖的 Redis 知识点，也是"能缓存"和"懂缓存"的分水岭。
+
+### 改动
+
+**新建文件：**
+
+| 文件 | 说明 |
+|------|------|
+| `annotation/CacheShield.java` | 替代 `@Cacheable`，增加 `ttl`、`ttlVariance`、`nullTtl` 防护参数 |
+| `annotation/CacheShieldEvict.java` | 替代 `@CacheEvict`，支持按 key 或全量清除 |
+| `aspect/CacheShieldAspect.java` | 切面实现三层防护逻辑，直接操作 `RedisTemplate` + `RedissonClient` |
+| `config/RedissonConfig.java` | Redisson 客户端配置，复用 `spring.data.redis.*` 连接信息 |
+
+**修改文件：**
+
+| 文件 | 改动 |
+|------|------|
+| `pom.xml` | 新增 `redisson-spring-boot-starter 3.32.0` 依赖 |
+| `service/impl/AboutServiceImpl.java` | `@Cacheable/@CacheEvict` → `@CacheShield/@CacheShieldEvict` |
+| `service/impl/CategoryServiceImpl.java` | 同上 |
+| `service/impl/TagServiceImpl.java` | 同上 |
+| `service/impl/UserServiceImpl.java` | 同上 |
+
+### 设计细节
+
+**1. 防穿透 — 空值缓存标记**
+
+```
+查询 about::about → 缓存未命中 → 查 DB → 返回 null
+→ 缓存 {"__CACHE_NULL__", TTL=5min}
+→ 后续相同查询命中缓存，直接返回 null（不打 DB）
+```
+
+- 空值 TTL 设为 5 分钟（短 TTL，防止占用太多空间）
+- 写入时标记为特殊字符串 `__CACHE_NULL__`，读取时识别
+
+**2. 防雪崩 — 随机 TTL**
+
+```
+@CacheShield(ttl = 30, ttlVariance = 10)
+→ 实际 TTL = 30 + random(0, 10) = 30~40 分钟
+```
+
+- 批量缓存不会在同一时刻过期
+- 写操作 `@CacheShieldEvict` 立即清除缓存触发重建
+
+**3. 防击穿 — Redisson 分布式锁互斥重建**
+
+```
+线程 A 缓存未命中 → tryLock("lock:about::about") ✓ → 双检缓存 → 查 DB → 写缓存 → unlock
+线程 B 缓存未命中 → tryLock("lock:about::about") ✗ → 等 100ms → 重试缓存 → 命中
+线程 C 同上
+```
+
+- `tryLock(3s wait, 30s lease)`：等锁超时 3s，持有锁最多 30s
+- 获取锁后**双检**缓存（Double-Check）：防止前一个线程已重建
+- 未抢到锁：等 100ms 后重试读缓存，仍 miss 则降级查 DB
+- 线程中断：静默降级直接查 DB
+
+**与 Spring Cache 的关系：**
+
+`@CacheShield` 完全替代 `@Cacheable`，AOP 切面直接操作 `RedisTemplate`：
+- 不再依赖 Spring `CacheManager` 的注解解析
+- 所有防护逻辑集中在 `CacheShieldAspect` 一个切面里
+- `@CacheShieldEvict` 的 `allEntries = true` 通过 `redisTemplate.keys(cacheName + "::*")` + `delete(keys)` 实现
+
+### 关键文件
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `annotation/CacheShield.java` | **新建** | 读缓存注解，含 ttl/ttlVariance/nullTtl 参数 |
+| `annotation/CacheShieldEvict.java` | **新建** | 清除缓存注解，支持 allEntries |
+| `aspect/CacheShieldAspect.java` | **新建** | AOP 切面，RedisTemplate + Redisson 实现三级防护 |
+| `config/RedissonConfig.java` | **新建** | Redisson 客户端配置 |
+| `pom.xml` | 修改 | +redisson-spring-boot-starter 3.32.0 |
+| `AboutServiceImpl.java` | 修改 | @Cacheable → @CacheShield |
+| `CategoryServiceImpl.java` | 修改 | 同上 |
+| `TagServiceImpl.java` | 修改 | 同上 |
+| `UserServiceImpl.java` | 修改 | 同上 |
+
+### 验证
+
+- `mvn test`：**33 tests passed**，0 failures，BUILD SUCCESS
+- 缓存穿透：查不存在的 key → DB 返回 null → 缓存空值标记 → 后续请求命中缓存
+- 缓存雪崩：两个服务同时启动缓存 → TTL 分别在 30~40min 区间 → 不会同时过期
+- 缓存击穿：并发查同一热点 key → 只有一个线程查 DB → 其他线程等锁释放后命中缓存
+
+---
 
 **日期**：2026-06-10
 

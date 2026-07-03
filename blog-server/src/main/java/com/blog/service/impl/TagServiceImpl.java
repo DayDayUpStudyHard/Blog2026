@@ -7,8 +7,8 @@ import com.blog.mapper.ArticleTagMapper;
 import com.blog.mapper.TagMapper;
 import com.blog.service.TagService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import com.blog.annotation.CacheShield;
+import com.blog.annotation.CacheShieldEvict;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,13 +28,13 @@ public class TagServiceImpl implements TagService {
     private final TagMapper tagMapper;
     private final ArticleTagMapper articleTagMapper;
 
-    @Cacheable(value = "tags", key = "'all'")
+    @CacheShield(value = "tags", key = "'all'", ttl = 30, ttlVariance = 10)
     @Override
     public List<Tag> list() {
         return tagMapper.selectList(null);
     }
 
-    @CacheEvict(value = "tags", allEntries = true)
+    @CacheShieldEvict(value = "tags", allEntries = true)
     @Override
     public Tag create(Tag tag) {
         tag.setCreateTime(LocalDateTime.now());
@@ -42,14 +42,14 @@ public class TagServiceImpl implements TagService {
         return tag;
     }
 
-    @CacheEvict(value = "tags", allEntries = true)
+    @CacheShieldEvict(value = "tags", allEntries = true)
     @Override
     public Tag update(Tag tag) {
         tagMapper.updateById(tag);
         return tag;
     }
 
-    @CacheEvict(value = "tags", allEntries = true)
+    @CacheShieldEvict(value = "tags", allEntries = true)
     @Override
     public void delete(Long id) {
         articleTagMapper.delete(new LambdaQueryWrapper<ArticleTag>().eq(ArticleTag::getTagId, id));

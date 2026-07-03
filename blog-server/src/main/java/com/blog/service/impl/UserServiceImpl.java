@@ -6,8 +6,8 @@ import com.blog.entity.User;
 import com.blog.mapper.UserMapper;
 import com.blog.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import com.blog.annotation.CacheShield;
+import com.blog.annotation.CacheShieldEvict;
 import org.springframework.stereotype.Service;
 
 /**
@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-    @Cacheable(value = "siteInfo", key = "'site'")
+    @CacheShield(value = "siteInfo", key = "'site'", ttl = 30, ttlVariance = 10)
     @Override
     public User getSiteInfo() {
         User user = userMapper.selectById(1L);
@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
         userMapper.updateById(user);
     }
 
-    @CacheEvict(value = "siteInfo", key = "'site'")
+    @CacheShieldEvict(value = "siteInfo", key = "'site'")
     @Override
     public void updateProfile(Long userId, String nickname, String email, String avatar, String bio, String socialLinks) {
         User user = userMapper.selectById(userId);
