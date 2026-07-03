@@ -4,7 +4,109 @@
 
 ---
 
-## 缓存三级防护 — 防穿透 + 防雪崩 + 防击穿
+## 点赞排行榜 + 操作审计 Stream 升级
+
+**日期**：2026-07-03
+
+### 背景
+
+缓存防护方案完成后，两项遗留的"简单实现"也需要补足深度：
+1. **点赞**只有基本去重+计数，没有排行 — 面试官问"怎么做点赞排行榜"答不上
+2. **操作审计**用 `@Async` 线程池直写 DB — 线程池队列有界可能丢消息，关停时未 flush
+
+### 改动
+
+#### 1. 点赞排行榜 — Redis ZSet
+
+**新增：**
+- `article:like:rank` ZSet — 全站点赞排行榜，score = 点赞数
+- `toggle()` 内同步 `ZINCRBY article:like:rank ±1 articleId`
+- `getTopLiked(int limit)` — `ZREVRANGE ... WITHSCORES` 取 Top-N
+- `GET /api/articles/top?limit=10` — 前端可直接展示热门文章
+
+**修改文件：**
+
+| 文件 | 改动 |
+|------|------|
+| `service/ArticleLikeService.java` | 新增 `getTopLiked(int limit)` |
+| `service/impl/ArticleLikeServiceImpl.java` | 新增 `article:like:rank` ZSet；`toggle()` 同步 `ZINCRBY`；`getTopLiked()` 实现 |
+| `controller/ArticleController.java` | 新增 `GET /api/articles/top` 端点 |
+
+#### 2. 操作审计 — Redis Stream 消息队列
+
+**架构：**
+
+```
+[旧] AOP → OperationLogService.save() → @Async "logExecutor" → MySQL INSERT
+[新] AOP → Redis Stream "oplog:stream" → OperationLogConsumer(Scheduled) → 批量 MySQL INSERT
+```
+
+**新建文件：**
+
+| 文件 | 说明 |
+|------|------|
+| `service/impl/OperationLogConsumer.java` | Redis Stream 消费者，每秒轮询拉取 20 条，批量写入 MySQL |
+
+**修改文件：**
+
+| 文件 | 改动 |
+|------|------|
+| `aspect/OperationLogAspect.java` | 注入 `StringRedisTemplate`，推送到 Stream 替代 `@Async` 写 DB |
+| `BlogApplication.java` | 新增 `@EnableScheduling` 启用定时任务 |
+
+**Stream 配置：**
+
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| Stream Key | `oplog:stream` | 消息队列 |
+| Consumer Group | `oplog-consumers` | 支持多实例负载均衡 |
+| Consumer | `consumer-1` | 消费者名称 |
+| Poll 间隔 | 1s | `@Scheduled(fixedDelay = 1000)` |
+| 每次拉取 | 20 条 | `StreamReadOptions.count(20)` |
+| 阻塞超时 | 1s | `block(Duration.ofSeconds(1))` |
+| ACK 策略 | 写入 DB 后 ACK | 未确认消息可重新被消费 |
+
+**消费者组初始化：**
+```java
+@PostConstruct
+public void init() {
+    try {
+        redisTemplate.opsForStream().createGroup("oplog:stream", "oplog-consumers");
+    } catch (RedisSystemException e) {
+        // 消费者组已存在 — 忽略
+    }
+}
+```
+
+**与 @Async 方案对比：**
+
+| 维度 | @Async 线程池 | Redis Stream |
+|------|-------------|-------------|
+| 持久化 | 内存队列，进程 crash 丢消息 | Stream 持久化到磁盘 |
+| 削峰 | 受 `queueCapacity` 限制（默认 Integer.MAX 但耗内存） | Stream 无界积压 |
+| 可重放 | 不支持 | 消费者组 + ACK，未确认消息可重放 |
+| 多实例 | 各实例独立消费 → 重复处理 | 消费者组自动负载均衡 |
+| 可观测 | 只看 `ThreadPoolTaskExecutor` 队列大小 | `XLEN oplog:stream` 直接看积压量 |
+| 关停 | `setWaitForTasksToCompleteOnShutdown` + timeout | 消费者停止拉取，Stream 保留消息 |
+
+### 关键文件
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `service/ArticleLikeService.java` | 修改 | +getTopLiked |
+| `service/impl/ArticleLikeServiceImpl.java` | 修改 | +ZSet rank |
+| `controller/ArticleController.java` | 修改 | +GET /api/articles/top |
+| `service/impl/OperationLogConsumer.java` | **新建** | Stream 消费者 |
+| `aspect/OperationLogAspect.java` | 修改 | 改推 Stream |
+| `BlogApplication.java` | 修改 | +@EnableScheduling |
+
+### 验证
+
+- `mvn test`：**33 tests passed**，0 failures，BUILD SUCCESS
+- 点赞排行：`GET /api/articles/top?limit=10` → 返回按 count 倒序的 `[{articleId, count}]`
+- Stream 消费：后台操作后 1s 内日志写入 MySQL，`XLEN oplog:stream` 为 0（消息已消费确认）
+
+---
 
 **日期**：2026-07-03
 

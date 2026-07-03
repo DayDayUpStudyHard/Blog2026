@@ -73,6 +73,12 @@ public class ArticleController {
         return Result.ok(articleLikeService.getLikeInfo(id, ip));
     }
 
+    @GetMapping("/top")
+    public Result<List<Map<String, Object>>> topArticles(
+            @RequestParam(defaultValue = "10") int limit) {
+        return Result.ok(articleLikeService.getTopLiked(Math.min(limit, 50)));
+    }
+
     // ==================== 全文搜索 ====================
 
     @GetMapping("/search")

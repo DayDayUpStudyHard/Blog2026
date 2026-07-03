@@ -2,14 +2,13 @@ package com.blog.aspect;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.blog.annotation.OperationLog;
-import com.blog.service.OperationLogService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -17,20 +16,41 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
- * 操作日志切面 — 记录后台管理操作到日志文件和数据库。
+ * 操作日志切面 — 记录后台管理操作到日志文件和 Redis Stream。
+ *
+ * <h3>架构演进</h3>
+ * <pre>
+ *  旧: 切面 → OperationLogService.save() → @Async → MySQL 直接写入
+ *  新: 切面 → Redis Stream (oplog:stream) → OperationLogConsumer → 批量写入 MySQL
+ * </pre>
+ *
+ * <h3>Stream 优势</h3>
+ * <ul>
+ *   <li><b>解耦</b>：请求线程只做 Stream 写入（轻量），不再依赖线程池</li>
+ *   <li><b>削峰</b>：Stream 作为缓冲区，高并发时消息积压不丢失</li>
+ *   <li><b>可重放</b>：消费者组 + ACK 机制，消息未确认可重新消费</li>
+ *   <li><b>可扩展</b>：多实例部署时消费者组自动负载均衡</li>
+ * </ul>
+ *
  * <p>
  * 日志格式：{@code [操作类型] 操作描述 | 用户: xxx | IP: xxx | 参数: [...] | 耗时: xxxms}
- * 同时通过 {@link OperationLogService} 异步写入数据库，提供审计查询能力。
  */
 @Slf4j
 @Aspect
 @Component
-@RequiredArgsConstructor
 public class OperationLogAspect {
 
-    private final OperationLogService operationLogService;
+    private static final String STREAM_KEY = "oplog:stream";
+
+    private final StringRedisTemplate redisTemplate;
+
+    public OperationLogAspect(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Around("@annotation(com.blog.annotation.OperationLog)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -47,7 +67,7 @@ public class OperationLogAspect {
         // 获取客户端 IP
         String ip = getClientIp();
 
-        // 截断参数避免日志过长
+        // 截断参数避免过长
         String args = Arrays.toString(joinPoint.getArgs());
         if (args.length() > 200) {
             args = args.substring(0, 200) + "...";
@@ -60,24 +80,24 @@ public class OperationLogAspect {
         Object result = joinPoint.proceed();
         long elapsed = System.currentTimeMillis() - start;
 
-        // 记录到日志文件
+        // 记录到日志文件（同步，即时可见）
         log.info("[{}] {} | 用户: {} | IP: {} | 参数: {} | 耗时: {}ms",
                 annotation.type(), annotation.value(), username, ip, args, elapsed);
 
-        // 异步持久化到数据库
+        // 推送到 Redis Stream（异步解耦，由 OperationLogConsumer 批量写入 DB）
         try {
-            com.blog.entity.OperationLog logEntry = new com.blog.entity.OperationLog();
-            logEntry.setUsername(username);
-            logEntry.setIp(ip);
-            logEntry.setOperation(annotation.value());
-            logEntry.setType(annotation.type());
-            logEntry.setMethodName(methodName);
-            logEntry.setArgs(args);
-            logEntry.setExecutionTime(elapsed);
-            logEntry.setCreateTime(LocalDateTime.now());
-            operationLogService.save(logEntry);
+            Map<String, String> fields = new LinkedHashMap<>();
+            fields.put("username", username);
+            fields.put("ip", ip);
+            fields.put("operation", annotation.value());
+            fields.put("type", annotation.type());
+            fields.put("methodName", methodName);
+            fields.put("args", args);
+            fields.put("executionTime", String.valueOf(elapsed));
+            fields.put("createTime", LocalDateTime.now().toString());
+            redisTemplate.opsForStream().add(STREAM_KEY, fields);
         } catch (Exception e) {
-            log.warn("Failed to persist operation log: {}", e.getMessage());
+            log.warn("[OpLog] Redis Stream 写入失败: {}", e.getMessage());
         }
 
         return result;

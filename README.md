@@ -49,10 +49,10 @@ Blog2026/
 |------|------|
 | 文章系统 | CRUD、分类/标签、Markdown 编辑、置顶、草稿/发布、全文搜索（ES + MySQL） |
 | 评论系统 | 嵌套回复（楼中楼）、留言板、后台审核 |
-| 体验增强 | 文章点赞（按IP去重）、阅读时长估算、代码高亮（highlight.js） |
+| 体验增强 | 文章点赞（IP去重 + ZSet排行榜）、阅读时长估算、代码高亮（highlight.js） |
 | 站点管理 | 说说/动态、关于页（个人时间线）、站点信息、用户设置 |
 | 数据归档 | 文章按年月归档、时间轴展示 |
-| 运维审计 | 操作审计日志（AOP + 异步入库）、后台日志查询 |
+| 运维审计 | 操作审计日志（AOP + Redis Stream 消息队列 + 批量写入）、后台日志查询 |
 | 监控 | Prometheus + Grafana、Spring Boot Actuator |
 | 工程化 | Docker 7 服务编排、CI/CD、全局异常处理、Redis 缓存、限流、AOP 日志 |
 | 缓存防护 | 三级防护体系 — 防穿透（空值缓存）、防雪崩（随机TTL）、防击穿（Redisson分布式锁） |
@@ -246,6 +246,62 @@ API 返回格式（图片文件额外包含 `thumbUrl`）：
 | `siteInfo` | `siteInfo::site` | 30+0~10min | `UserServiceImpl.getSiteInfo()` |
 
 > `pom.xml` 依赖：`redisson-spring-boot-starter 3.32.0`。Redisson 连接参数复用 `spring.data.redis.*` 配置，与 Spring Data Redis 共享同一 Redis 实例。
+
+## 点赞排行榜
+
+在原有 Redis Set（IP 去重）+ INCR（计数）基础上，增加 ZSet 排行榜。
+
+**数据结构（3 个 Redis Key）：**
+
+| Key | 类型 | 用途 | 示例命令 |
+|-----|------|------|----------|
+| `article:likes:{id}` | Set | 已点赞 IP 集合（SISMEMBER 去重） | `SADD article:likes:5 192.168.1.1` |
+| `article:like:count:{id}` | String | 点赞计数 | `INCR article:like:count:5` |
+| `article:like:rank` | **ZSet** | 全站排行榜（score=count） | `ZINCRBY article:like:rank 1 5` |
+
+**API：**
+
+```
+GET /api/articles/top?limit=10  → [{articleId: 5, count: 42}, ...]
+```
+
+**设计要点：**
+- 排行榜实时更新（`ZINCRBY`），不依赖定时任务
+- `ZREVRANGE ... WITHSCORES` 直接取 Top-N，O(log N + M) 复杂度
+- 缓存穿透保护：计数为 0 的冷数据不同步到 ZSet
+
+## 操作审计 — Redis Stream 消息队列
+
+将操作日志从 `@Async` 线程池直写 DB 升级为 Redis Stream 消息队列。
+
+**架构对比：**
+
+```
+旧：AOP → OperationLogService.save() → @Async "logExecutor" → MySQL INSERT
+新：AOP → Redis Stream (oplog:stream) → OperationLogConsumer → 批量 MySQL INSERT
+```
+
+**Stream 配置：**
+
+| 参数 | 值 |
+|------|-----|
+| Stream Key | `oplog:stream` |
+| 消费者组 | `oplog-consumers` |
+| Consumer | `consumer-1` |
+| 拉取策略 | 每 1 秒拉取，每次最多 20 条 |
+| ACK | 写入 DB 成功后确认，未确认消息可重放 |
+
+**升级收益：**
+
+| 维度 | @Async 线程池 | Redis Stream |
+|------|-------------|-------------|
+| 解耦程度 | 线程池内排队，关停可能丢消息 | Stream 持久化，消费者离线不影响生产者 |
+| 削峰能力 | 受线程池队列上限限制 | Stream 无界，高并发消息积压不丢 |
+| 可重放 | 不支持 | 消费者组 + ACK，未确认消息重新消费 |
+| 多实例 | 各实例独立，消息重复处理 | 消费者组自动负载均衡，每条消息只处理一次 |
+| 可观测 | 只能看线程池队列大小 | `XLEN oplog:stream` 直接看积压量 |
+
+> 关键类：[`OperationLogAspect.java`](blog-server/src/main/java/com/blog/aspect/OperationLogAspect.java) — 生产者；[`OperationLogConsumer.java`](blog-server/src/main/java/com/blog/service/impl/OperationLogConsumer.java) — 消费者。
 
 ## 小工具平台
 
