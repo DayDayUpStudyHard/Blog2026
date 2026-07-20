@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 /**
  * 主题状态管理 — 集中管理亮/暗主题切换，替代 window.__adminTheme 全局变量。
