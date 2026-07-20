@@ -53,15 +53,20 @@ public class OperationLogConsumer {
         this.operationLogMapper = operationLogMapper;
     }
 
-    /** 启动时创建消费者组（已存在则忽略） */
+    private volatile boolean disabled = false;
+
+    /** 启动时创建消费者组（已存在则忽略，不支持则降级） */
     @PostConstruct
     public void init() {
         try {
             redisTemplate.opsForStream().createGroup(STREAM_KEY, GROUP);
             log.info("[OpLog] 消费者组创建成功: {} / {} / {}", STREAM_KEY, GROUP, CONSUMER_NAME);
         } catch (RedisSystemException e) {
-            // 消费者组已存在 — 无需操作
             log.debug("[OpLog] 消费者组已存在: {}", GROUP);
+        } catch (Exception e) {
+            // Redis 版本不支持 Stream（如 Windows Redis 3.x）→ 降级为 @Async 直写
+            disabled = true;
+            log.warn("[OpLog] Redis 不支持 Stream ({}), 降级为 @Async 直写 DB", e.getMessage().split("\n")[0]);
         }
     }
 
@@ -69,6 +74,7 @@ public class OperationLogConsumer {
     @SuppressWarnings("unchecked")
     @Scheduled(fixedDelay = 1000)
     public void consume() {
+        if (disabled) return;
         StreamOperations<String, Object, Object> ops = redisTemplate.opsForStream();
         try {
             List<MapRecord<String, Object, Object>> records = ops.read(
