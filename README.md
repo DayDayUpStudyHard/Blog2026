@@ -40,7 +40,9 @@ Blog2026/
     │   ├── backend/      # Python FastAPI
     │   └── frontend/     # Vue 3 + TypeScript
     └── crypto-toolbox/   # 加密解密工具箱
-        └── frontend/     # Vue 3 + TypeScript
+    │   └── frontend/     # Vue 3 + TypeScript
+    └── chat-assistant/   # AI 智能问答（RAG）
+        └── backend/      # Python FastAPI
 ```
 
 ## 核心功能
@@ -56,6 +58,8 @@ Blog2026/
 | 监控 | Prometheus + Grafana、Spring Boot Actuator |
 | 工程化 | Docker 7 服务编排、CI/CD、全局异常处理、Redis 缓存、限流、AOP 日志 |
 | 缓存防护 | 三级防护体系 — 防穿透（空值缓存）、防雪崩（随机TTL）、防击穿（Redisson分布式锁） |
+| AI 问答 | 基于博客内容的 RAG 智能问答（ES 检索 + DeepSeek LLM），右下角浮窗入口，流式对话 |
+| 内容管理 | 文章可见性三态控制 — 公开（展示+RAG）/ 仅AI问答 / 私有 |
 
 ## 快速开始
 
@@ -302,6 +306,88 @@ GET /api/articles/top?limit=10  → [{articleId: 5, count: 42}, ...]
 | 可观测 | 只能看线程池队列大小 | `XLEN oplog:stream` 直接看积压量 |
 
 > 关键类：[`OperationLogAspect.java`](blog-server/src/main/java/com/blog/aspect/OperationLogAspect.java) — 生产者；[`OperationLogConsumer.java`](blog-server/src/main/java/com/blog/service/impl/OperationLogConsumer.java) — 消费者。
+
+## AI 智能问答（RAG）
+
+基于博客文章内容的检索增强生成（RAG）对话系统。用户通过前台右下角浮窗发起对话，后端检索相关文章并调用 LLM 生成回答。
+
+### 设计决策
+
+| 决策 | 选择 | 理由 |
+|------|------|------|
+| 检索引擎 | ES IK 中文分词 `multi_match` | 复用已有 ES，零额外成本，关键词匹配效果足够 |
+| 对话后端 | Python FastAPI 微服务 | 复用旅行助手的 OpenAI SDK + 配置模式，SSE streaming 原生支持 |
+| 流式输出 | SSE (Server-Sent Events) | FastAPI `StreamingResponse` + 前端 `ReadableStream`，零额外依赖 |
+| LLM | DeepSeek（OpenAI 兼容） | 与旅行助手共享 `.env` 配置 |
+| 索引更新 | Java 侧 CRUD 时同步 ES | blog-server 已有 ES 索引机制，加 visibility 过滤即可 |
+
+### 架构
+
+```
+blog-front (ChatWindow.vue)
+    │  SSE /api/chat/send
+    ▼
+nginx → chat-server (FastAPI :8088)
+    ├── ES (blog_articles)  ← 检索 visibility IN(PUBLIC, RAG_ONLY)
+    └── DeepSeek API        ← LLM 流式生成
+```
+
+Java (blog-server) 只负责文章 CRUD 时同步 ES 索引（正文 + visibility），不管 RAG 管道。Python 独立完成检索+对话+SSE。
+
+### RAG 流程
+
+```
+用户提问 → ES multi_match 检索 Top-5 → 拼接为上下文 prompt → DeepSeek 流式生成 → SSE 推送前端
+```
+
+### 内容可见性管理
+
+| 状态 | 展示在网站 | 参与 RAG 检索 | 说明 |
+|------|-----------|-------------|------|
+| `PUBLIC` | ✅ | ✅ | 公开文章 |
+| `RAG_ONLY` | ❌ | ✅ | 不出现在博客页面，但可被 AI 检索回答 |
+| `PRIVATE` | ❌ | ❌ | 完全私有，仅管理员可见 |
+
+管理端 ArticleEdit.vue 提供 radio-group 选择，ArticleList.vue 提供筛选。
+
+### 项目结构
+
+```
+tools/chat-assistant/
+└── backend/
+    ├── run.py                 # 启动入口 (uvicorn, port 8088)
+    ├── requirements.txt       # fastapi + openai + elasticsearch
+    ├── .env.example           # LLM_API_KEY / ES_HOST
+    └── app/
+        ├── main.py            # FastAPI app + CORS
+        ├── config.py          # 环境变量配置
+        ├── api/routes.py      # POST /send (SSE) + GET /suggestions
+        ├── services/
+        │   ├── es_service.py  # ES multi_match 检索 + visibility 过滤
+        │   └── llm_service.py # prompt 构建 + stream 调用
+        └── models/schemas.py  # ChatRequest / SSEChunk / SourceCitation
+```
+
+**SSE 事件格式：**
+
+| Event | Data | 说明 |
+|-------|------|------|
+| `status` | `{"status": "thinking"}` | 开始检索 |
+| `chunk` | `{"content": "Spring Boot..."}` | 流式文本 token |
+| `sources` | `{"sources": [{id, title, snippet}]}` | 引用来源 |
+| `done` | `{"content": "完整回复"}` | 流结束 |
+| `error` | `{"error": "错误信息"}` | 异常 |
+
+### 启动
+
+```bash
+cd tools/chat-assistant/backend
+pip install -r requirements.txt
+cp .env.example .env    # 编辑 .env 填入 LLM_API_KEY
+python run.py           # → http://localhost:8088
+```
+
+> **依赖**：ES 需运行中且 `blog_articles` 索引存在（Java 侧自动创建）；LLM API Key 必填。
 
 ## 小工具平台
 

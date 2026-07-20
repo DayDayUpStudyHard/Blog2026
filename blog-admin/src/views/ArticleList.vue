@@ -9,6 +9,11 @@
             <el-option label="已发布" :value="1" />
             <el-option label="草稿" :value="0" />
           </el-select>
+          <el-select v-model="filterVisibility" placeholder="可见性" clearable @change="fetchData" class="filter-select" size="small">
+            <el-option label="公开" value="PUBLIC" />
+            <el-option label="仅AI" value="RAG_ONLY" />
+            <el-option label="私有" value="PRIVATE" />
+          </el-select>
         </div>
         <el-button type="primary" @click="$router.push('/articles/create')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -29,6 +34,13 @@
           <template #default="{ row }">
             <span class="status-badge" :class="row.status === 1 ? 'published' : 'draft'">
               {{ row.status === 1 ? '已发布' : '草稿' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="可见性" width="100" align="center">
+          <template #default="{ row }">
+            <span class="visibility-badge" :class="(row.visibility || 'PUBLIC').toLowerCase()">
+              {{ visibilityLabel(row.visibility) }}
             </span>
           </template>
         </el-table-column>
@@ -83,6 +95,9 @@ const page = ref(1)
 const pageSize = 10
 const total = ref(0)
 const filterStatus = ref(null)
+const filterVisibility = ref(null)
+const visibilityLabels = { PUBLIC: '公开', RAG_ONLY: '仅AI', PRIVATE: '私有' }
+function visibilityLabel(v) { return visibilityLabels[v] || '公开' }
 
 onMounted(() => fetchData())
 
@@ -91,6 +106,7 @@ async function fetchData() {
   try {
     const params = { page: page.value, size: pageSize }
     if (filterStatus.value !== null && filterStatus.value !== '') params.status = filterStatus.value
+    if (filterVisibility.value && filterVisibility.value !== '') params.visibility = filterVisibility.value
     const res = await getAdminArticles(params)
     articles.value = res.data.data.records
     total.value = res.data.data.total
@@ -135,6 +151,15 @@ async function doDelete(id) {
 }
 .status-badge.published { color: #67c23a; background: #f0f9eb; }
 .status-badge.draft { color: #909399; background: #f5f7fa; }
+
+.visibility-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 500;
+  padding: 2px 10px; border-radius: 4px;
+}
+.visibility-badge.public { color: #409EFF; background: #ecf5ff; }
+.visibility-badge.rag_only { color: #8b5cf6; background: #f5f0ff; }
+.visibility-badge.private { color: #909399; background: #f5f7fa; }
 
 .view-count { font-size: 13px; color: #909399; }
 .time-cell { font-size: 12px; color: #909399; }

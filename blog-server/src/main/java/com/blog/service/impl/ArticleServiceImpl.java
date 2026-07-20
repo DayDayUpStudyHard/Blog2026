@@ -50,7 +50,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Page<Article> getPublishedList(int page, int size, Long categoryId, String keyword) {
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<Article>()
-                .eq(Article::getStatus, 1)
+                .eq(Article::getVisibility, "PUBLIC")
                 .orderByDesc(Article::getIsTop)
                 .orderByDesc(Article::getCreateTime);
         if (categoryId != null) wrapper.eq(Article::getCategoryId, categoryId);
@@ -68,7 +68,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Article getDetail(Long id) {
         Article article = articleMapper.selectById(id);
-        if (article == null || article.getStatus() != 1) {
+        if (article == null || !"PUBLIC".equals(article.getVisibility())) {
             throw new IllegalArgumentException("文章不存在");
         }
         article.setViewCount(article.getViewCount() + 1);
@@ -84,7 +84,7 @@ public class ArticleServiceImpl implements ArticleService {
 
         // prev: older article (largest create_time < current, status=1)
         var prevList = articleMapper.selectList(new LambdaQueryWrapper<Article>()
-                .eq(Article::getStatus, 1)
+                .eq(Article::getVisibility, "PUBLIC")
                 .lt(Article::getCreateTime, current.getCreateTime())
                 .orderByDesc(Article::getCreateTime)
                 .last("limit 1"));
@@ -96,7 +96,7 @@ public class ArticleServiceImpl implements ArticleService {
 
         // next: newer article (smallest create_time > current, status=1)
         var nextList = articleMapper.selectList(new LambdaQueryWrapper<Article>()
-                .eq(Article::getStatus, 1)
+                .eq(Article::getVisibility, "PUBLIC")
                 .gt(Article::getCreateTime, current.getCreateTime())
                 .orderByAsc(Article::getCreateTime)
                 .last("limit 1"));
@@ -115,10 +115,11 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public Page<Article> getAdminList(int page, int size, Integer status) {
+    public Page<Article> getAdminList(int page, int size, Integer status, String visibility) {
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<Article>()
                 .orderByDesc(Article::getCreateTime);
         if (status != null) wrapper.eq(Article::getStatus, status);
+        if (visibility != null && !visibility.isBlank()) wrapper.eq(Article::getVisibility, visibility);
         return articleMapper.selectPage(new Page<>(page, size), wrapper);
     }
 
@@ -133,6 +134,7 @@ public class ArticleServiceImpl implements ArticleService {
         article.setCategoryId(dto.getCategoryId());
         article.setIsTop(dto.getIsTop() != null ? dto.getIsTop() : 0);
         article.setStatus(dto.getStatus() != null ? dto.getStatus() : 0);
+        article.setVisibility(dto.getVisibility() != null ? dto.getVisibility() : "PUBLIC");
         article.setViewCount(0);
         LocalDateTime now = LocalDateTime.now();
         article.setCreateTime(now);
@@ -162,6 +164,7 @@ public class ArticleServiceImpl implements ArticleService {
         article.setCategoryId(dto.getCategoryId());
         if (dto.getIsTop() != null) article.setIsTop(dto.getIsTop());
         if (dto.getStatus() != null) article.setStatus(dto.getStatus());
+        if (dto.getVisibility() != null) article.setVisibility(dto.getVisibility());
         article.setUpdateTime(LocalDateTime.now());
         articleMapper.updateById(article);
 
@@ -195,7 +198,7 @@ public class ArticleServiceImpl implements ArticleService {
         }
         // MySQL LIKE 回退
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<Article>()
-                .eq(Article::getStatus, 1)
+                .eq(Article::getVisibility, "PUBLIC")
                 .and(w -> w.like(Article::getTitle, keyword)
                         .or().like(Article::getSummary, keyword)
                         .or().like(Article::getContent, keyword))

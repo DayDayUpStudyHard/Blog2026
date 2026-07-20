@@ -18,7 +18,7 @@ public interface ArticleService {
     Article getDetail(Long id);
     Map<String, Object> getNav(Long id);
     Article getById(Long id);
-    Page<Article> getAdminList(int page, int size, Integer status);
+    Page<Article> getAdminList(int page, int size, Integer status, String visibility);
     Article create(ArticleDto dto);
     Article update(Long id, ArticleDto dto);
     void delete(Long id);

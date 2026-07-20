@@ -31,8 +31,9 @@ public class ArticleAdminController {
     public Result<Map<String, Object>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Integer status) {
-        var pageResult = articleService.getAdminList(page, size, status);
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String visibility) {
+        var pageResult = articleService.getAdminList(page, size, status, visibility);
         Map<String, Object> map = new HashMap<>();
         map.put("records", pageResult.getRecords());
         map.put("total", pageResult.getTotal());

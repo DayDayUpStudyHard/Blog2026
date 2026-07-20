@@ -46,6 +46,10 @@ public class ArticleDocument {
     @Field(type = FieldType.Integer)
     private Integer status;
 
+    /** 可见性：PUBLIC / RAG_ONLY / PRIVATE */
+    @Field(type = FieldType.Keyword)
+    private String visibility;
+
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
     private LocalDateTime createTime;
 }

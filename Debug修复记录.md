@@ -4,7 +4,141 @@
 
 ---
 
-## 点赞排行榜 + 操作审计 Stream 升级
+## AI 对话 + RAG 检索增强生成 + 内容可见性管理
+
+**日期**：2026-07-21
+
+### 背景
+
+博客缺少交互式 AI 能力。利用已有的 ES + LLM API 实现 RAG 智能问答：
+- 前台右下角浮窗对话窗口（与工具浮窗并列）
+- 用博客文章作为知识库做专属化回答
+- 管理端控制文章是否参与 RAG
+
+### 架构决策
+
+全部 RAG 逻辑放 Python FastAPI 微服务（`chat-assistant`），与旅行助手模式一致，避免给 Spring Boot 加 LLM 依赖：
+
+| 决策 | 选择 | 理由 |
+|------|------|------|
+| 检索 | ES IK 分词 `multi_match`（非向量） | 复用已有 ES，零 embedding 成本 |
+| 对话 | Python FastAPI（非 Java） | SSE streaming 原生支持 + OpenAI SDK |
+| 流式 | SSE | FastAPI `StreamingResponse` + 前端 `ReadableStream` |
+| 索引 | Java 只管写正文到 ES | 不调 embedding，Python 检索用 IK 分词 |
+| LLM | DeepSeek | 与旅行助手共享 API Key |
+
+### 改动
+
+#### 1. 内容可见性管理（Phase 1-3）
+
+**数据库**：`t_article` 新增 `visibility VARCHAR(20) DEFAULT 'PUBLIC'` 列。三种状态：
+
+| 值 | 网站展示 | RAG 检索 |
+|----|---------|----------|
+| PUBLIC | ✅ | ✅ |
+| RAG_ONLY | ❌ | ✅ |
+| PRIVATE | ❌ | ❌ |
+
+**Java 后端改动：**
+
+| 文件 | 改动 |
+|------|------|
+| `entity/Article.java` | +visibility 字段 |
+| `dto/ArticleDto.java` | +visibility 字段 |
+| `document/ArticleDocument.java` | +visibility (Keyword)，-embedding 字段 |
+| `service/ArticleService.java` | getAdminList +visibility 参数 |
+| `service/ArticleServiceImpl.java` | 公共方法 `status=1` → `visibility='PUBLIC'`；create/update 读写 visibility |
+| `service/ArticleSearchServiceImpl.java` | index() 同步 visibility 到 ES；search() 过滤 PUBLIC |
+| `controller/admin/ArticleAdminController.java` | list() +visibility 参数 |
+| `sql/init.sql` | t_article +visibility 列 |
+
+**管理端 UI：**
+
+| 文件 | 改动 |
+|------|------|
+| `ArticleEdit.vue` | +visibility radio-group（公开/仅AI/私有）；form 默认 PUBLIC |
+| `ArticleList.vue` | +visibility 筛选下拉框 + 表格列（colored badge） |
+
+#### 2. AI 对话后端（Phase 4）
+
+**新建目录：** `tools/chat-assistant/backend/`
+
+| 文件 | 说明 |
+|------|------|
+| `app/config.py` | 环境变量（LLM/ES），复用旅行助手 .env 模式 |
+| `app/main.py` | FastAPI + CORS |
+| `app/api/routes.py` | `POST /api/chat/send` (SSE) + `GET /api/chat/suggestions` |
+| `app/services/es_service.py` | ES `multi_match` 检索 title^3/summary^2/content，filter visibility IN (PUBLIC, RAG_ONLY)，top-5 |
+| `app/services/llm_service.py` | RAG prompt 构建 + DeepSeek `stream=True` 逐 token yield |
+| `app/models/schemas.py` | ChatRequest / SSEChunk / SourceCitation |
+| `run.py` | uvicorn :8088 |
+| `.env.example` | LLM_API_KEY / ES_HOST |
+
+**SSE 事件流：**
+```
+event: status → thinking
+event: chunk  → "Spring Boot..."
+event: sources → [{id, title, snippet}]
+event: done   → {content: "完整回复"}
+```
+
+**LLM Prompt 设计：**
+- System prompt 定义"基于博客文章回答"角色
+- 每篇文章截断 3000 字防超 context window
+- 历史保留 10 轮
+- 不可用文章时告知用户 + 建议一般性建议
+
+#### 3. 前台聊天窗口（Phase 5）
+
+**新建文件：** `blog-front/src/components/ChatWindow.vue`
+
+- 右下角浮动按钮（🤖），位于 `bottom:140px / right:32px`，与 ToolsWidget 并列
+- 点击展开 420px 右侧滑出面板（Teleport to body）
+- 空状态：推荐问题 chip 按钮
+- 消息气泡：用户（右/紫色）+ AI（左/灰色）+ 流式打字效果
+- 来源引用：AI 回复下方可折叠文章标题+高亮摘要
+- SSE 解析：Fetch API `ReadableStream` 逐行解析 event/data
+- 暗色模式：完整 `[data-theme="dark"]` 适配
+- 移动端：面板全宽 + backdrop 遮罩
+
+**修改文件：** `blog-front/src/App.vue` — import + register ChatWindow
+
+#### 4. 部署配置（Phase 6）
+
+| 文件 | 改动 |
+|------|------|
+| `nginx/nginx.conf` | +`/api/chat/` location → chat-server:8088，`proxy_buffering off` |
+| `start.bat` | +[7/7] chat assistant，步骤计数 5→7 |
+| `start.sh` | 同上 |
+
+### 关键文件
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `blog-server/sql/init.sql` | 修改 | +visibility 列 |
+| `blog-server/.../entity/Article.java` | 修改 | +visibility |
+| `blog-server/.../dto/ArticleDto.java` | 修改 | +visibility |
+| `blog-server/.../document/ArticleDocument.java` | 修改 | +visibility |
+| `blog-server/.../ArticleServiceImpl.java` | 修改 | visibility 过滤 |
+| `blog-server/.../ArticleSearchServiceImpl.java` | 修改 | visibility 索引 |
+| `blog-admin/.../ArticleEdit.vue` | 修改 | visibility radio-group |
+| `blog-admin/.../ArticleList.vue` | 修改 | visibility 筛选+列 |
+| `tools/chat-assistant/backend/` | **新建** | Python 对话微服务 |
+| `blog-front/.../ChatWindow.vue` | **新建** | 聊天窗口 |
+| `blog-front/.../App.vue` | 修改 | 注册 ChatWindow |
+| `nginx/nginx.conf` | 修改 | +/api/chat/ proxy |
+| `start.bat` / `start.sh` | 修改 | +chat-server |
+
+### 验证
+
+- `mvn test`：**33 tests passed**，BUILD SUCCESS
+- 管理端：创建 3 篇文章设不同 visibility → 前台只看到 PUBLIC
+- ES：RAG_ONLY 不在网站显示但可被 AI 检索
+- 对话：输入"这个博客主要讲什么" → 返回基于文章内容的回答 + 来源引用
+- 流式：回复逐 token 出现，非一次性加载
+- 浮窗：ChatWindow + ToolsWidget 两个按钮并排显示，互不遮挡
+
+--- + 操作审计 Stream 升级
 
 **日期**：2026-07-03
 

@@ -22,4 +22,6 @@ public class ArticleDto {
     private List<Long> tagIds;
     private Integer isTop;
     private Integer status;
+    /** 可见性：PUBLIC / RAG_ONLY / PRIVATE */
+    private String visibility;
 }

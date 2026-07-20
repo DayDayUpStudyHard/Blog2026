@@ -27,6 +27,8 @@ public class Article {
     private String cover;
     private Integer isTop;
     private Integer status;
+    /** 可见性：PUBLIC（展示+RAG）、RAG_ONLY（仅RAG）、PRIVATE（私有） */
+    private String visibility;
     private Integer viewCount;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

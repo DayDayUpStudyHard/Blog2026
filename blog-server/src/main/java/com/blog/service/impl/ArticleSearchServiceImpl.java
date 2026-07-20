@@ -18,8 +18,9 @@ import java.util.List;
 /**
  * ES 文章搜索服务实现。
  * <p>
- * 通过 {@code blog.search.type=elasticsearch} 条件启用，未配置 ES 时回退到
- * {@link MysqlFallbackSearchService}（MySQL LIKE 搜索）。
+ * 通过 {@code blog.search.type=elasticsearch} 条件启用。
+ * 索引时写入正文 + visibility，供 chat-assistant (Python) 做 RAG 检索。
+ * 公共搜索只返回 visibility=PUBLIC 的文章。
  */
 @Slf4j
 @Service
@@ -39,7 +40,7 @@ public class ArticleSearchServiceImpl implements ArticleSearchService {
 
         List<Article> articles = esPage.getContent().stream()
                 .map(doc -> articleMapper.selectById(doc.getId()))
-                .filter(a -> a != null && a.getStatus() == 1)
+                .filter(a -> a != null && "PUBLIC".equals(a.getVisibility()))
                 .toList();
 
         Page<Article> result = new Page<>(page, size);
@@ -58,6 +59,7 @@ public class ArticleSearchServiceImpl implements ArticleSearchService {
                     .summary(article.getSummary())
                     .categoryId(article.getCategoryId())
                     .status(article.getStatus())
+                    .visibility(article.getVisibility())
                     .createTime(article.getCreateTime())
                     .build();
             searchRepository.save(doc);

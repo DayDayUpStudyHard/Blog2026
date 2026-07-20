@@ -44,6 +44,13 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item label="可见性">
+          <el-radio-group v-model="form.visibility" size="small">
+            <el-radio value="PUBLIC">公开（展示在网站 + AI问答）</el-radio>
+            <el-radio value="RAG_ONLY">仅AI问答（不出现在网站）</el-radio>
+            <el-radio value="PRIVATE">私有（仅自己可见）</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="内容" prop="content">
           <MdEditor v-model="form.content" language="en-US" style="height:520px" class="md-editor" :onUploadImg="onUploadImg" />
         </el-form-item>
@@ -81,7 +88,7 @@ const tags = ref([])
 
 const form = ref({
   title: '', content: '', summary: '', categoryId: null,
-  tagIds: [], cover: '', isTop: 0, status: 0
+  tagIds: [], cover: '', isTop: 0, status: 0, visibility: 'PUBLIC'
 })
 
 const rules = {
@@ -104,7 +111,8 @@ onMounted(async () => {
         summary: article.summary || '', categoryId: article.categoryId,
         tagIds: article.tags ? article.tags.map(t => t.id) : [],
         cover: article.cover || '', isTop: article.isTop || 0,
-        status: article.status || 0
+        status: article.status || 0,
+        visibility: article.visibility || 'PUBLIC'
       })
     }
   }
