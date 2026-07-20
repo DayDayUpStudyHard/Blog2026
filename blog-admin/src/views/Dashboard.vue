@@ -126,24 +126,34 @@ onMounted(fetchDashboard)
 async function fetchDashboard() {
   loading.value = true
   try {
-    const [articleRes, categoryRes, commentRes, momentRes] = await Promise.all([
+    const [articleResult, categoryResult, commentResult, momentResult] = await Promise.allSettled([
       getAdminArticles({ page: 1, size: 5 }),
       getCategories(),
       getAdminComments({ page: 1, size: 5 }),
       getAdminMoments({ page: 1, size: 1 })
     ])
 
-    recentArticles.value = articleRes.data.data.records || []
-    recentComments.value = commentRes.data.data.records || []
+    const articleData = unwrapData(articleResult, { records: [], total: 0 })
+    const categoryData = unwrapData(categoryResult, [])
+    const commentData = unwrapData(commentResult, { records: [], total: 0 })
+    const momentData = unwrapData(momentResult, { records: [], total: 0 })
+
+    recentArticles.value = articleData.records || []
+    recentComments.value = commentData.records || []
     stats.value = {
-      articleCount: articleRes.data.data.total || 0,
-      categoryCount: categoryRes.data.data.length || 0,
-      commentCount: commentRes.data.data.total || 0,
-      momentCount: momentRes.data.data.total || 0
+      articleCount: Number(articleData.total) || 0,
+      categoryCount: Array.isArray(categoryData) ? categoryData.length : 0,
+      commentCount: Number(commentData.total) || 0,
+      momentCount: Number(momentData.total) || 0
     }
   } finally {
     loading.value = false
   }
+}
+
+function unwrapData(result, fallback) {
+  if (result.status !== 'fulfilled') return fallback
+  return result.value?.data?.data ?? fallback
 }
 </script>
 
