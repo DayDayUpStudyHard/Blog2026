@@ -198,12 +198,17 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 </script>
 
 <style scoped>
-.article-detail { padding: 24px 0; }
+.article-detail {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px 0;
+}
 
 /* Cover Hero */
 .cover-hero {
-  width: 100%; height: 340px; border-radius: 16px; overflow: hidden;
+  width: 100%; height: 320px; border-radius: 8px; overflow: hidden;
   position: relative; margin-bottom: 28px;
+  border: 1px solid var(--blog-border);
 }
 .cover-img {
   width: 100%; height: 120%;
@@ -217,7 +222,7 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 
 .gradient-hero {
   height: 200px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: #111827;
   position: relative;
 }
 .gradient-bg {
@@ -237,15 +242,12 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 }
 
 .article-title {
-  font-size: 30px; color: #303133; line-height: 1.4; margin: 0 0 14px;
+  font-size: 34px; color: var(--blog-text); line-height: 1.28; margin: 0 0 14px;
   font-weight: 700;
-  background: linear-gradient(135deg, #409EFF, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: 0;
 }
 
-.meta { display: flex; gap: 10px; justify-content: center; align-items: center; color: #909399; font-size: 13px; }
+.meta { display: flex; gap: 10px; justify-content: center; align-items: center; color: var(--blog-muted); font-size: 13px; flex-wrap: wrap; }
 .meta-item { display: flex; align-items: center; gap: 5px; }
 .meta-sep { color: #d0d5dd; }
 
@@ -253,17 +255,17 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
   padding: 0 0 28px; display: flex; justify-content: center;
 }
 .divider::after {
-  content: ''; width: 120px; height: 2px; border-radius: 1px;
-  background: linear-gradient(90deg, transparent, #409EFF, #10b981, transparent);
+  content: ''; width: 100%; max-width: 220px; height: 1px;
+  background: var(--blog-border);
 }
 
-.article-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f2f5; }
+.article-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--blog-border); }
 .tags-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tags-label { font-size: 12px; color: #909399; font-weight: 500; }
 .tag-item {
-  font-size: 12px; color: #409EFF;
+  font-size: 12px; color: var(--blog-primary);
   padding: 3px 10px; border-radius: 4px;
-  background: #ecf5ff; border: 1px solid #d9ecff;
+  background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.16);
   transition: all 0.2s;
 }
 .tag-item:hover {
@@ -274,17 +276,17 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 .article-nav {
   display: flex; justify-content: space-between; gap: 16px;
   margin-top: 40px; padding-top: 24px;
-  border-top: 1px solid #f0f2f5;
+  border-top: 1px solid var(--blog-border);
 }
 .nav-link {
   flex: 1; text-decoration: none; padding: 16px 20px; border-radius: 10px;
-  background: rgba(255,255,255,0.6);
-  border: 1px solid rgba(255,255,255,0.5);
+  background: var(--blog-surface);
+  border: 1px solid var(--blog-border);
   transition: all 0.25s;
 }
 .nav-link:hover {
-  background: rgba(255,255,255,0.85);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 8px 20px rgba(0,0,0,0.06);
+  background: var(--blog-surface);
+  box-shadow: var(--blog-shadow);
   transform: translateY(-1px);
 }
 .nav-link.next { text-align: right; }
@@ -294,7 +296,7 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 }
 .nav-link.next .nav-label { justify-content: flex-end; }
 .nav-title {
-  font-size: 14px; color: #303133; font-weight: 500; line-height: 1.5;
+  font-size: 14px; color: var(--blog-text); font-weight: 500; line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
@@ -302,7 +304,7 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 .like-section {
   display: flex; align-items: center; gap: 12px;
   margin-top: 24px; padding-top: 20px;
-  border-top: 1px solid #f0f2f5;
+  border-top: 1px solid var(--blog-border);
 }
 .like-btn {
   display: inline-flex; align-items: center; gap: 8px;
@@ -335,5 +337,19 @@ function formatDate(d) { return d ? d.substring(0, 10) : '' }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 640px) {
+  .cover-hero {
+    height: 220px;
+  }
+
+  .article-title {
+    font-size: 28px;
+  }
+
+  .article-nav {
+    flex-direction: column;
+  }
 }
 </style>

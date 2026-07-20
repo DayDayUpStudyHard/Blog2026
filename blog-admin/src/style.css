@@ -18,7 +18,7 @@
   --el-color-info: #909399;
 
   --el-bg-color: #ffffff;
-  --el-bg-color-page: #f0f2f5;
+  --el-bg-color-page: #f6f7fb;
   --el-bg-color-overlay: #ffffff;
   --el-border-color: #e4e7ed;
   --el-border-color-light: #e8ecf0;
@@ -47,9 +47,9 @@
   --accent-violet-light: #f5f3ff;
 
   /* Glass */
-  --glass-bg: rgba(255,255,255,0.72);
-  --glass-blur: blur(16px);
-  --glass-border: rgba(255,255,255,0.5);
+  --glass-bg: #ffffff;
+  --glass-blur: none;
+  --glass-border: #e5e7eb;
 
   /* Multi-layer shadows */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.03);
@@ -71,8 +71,7 @@
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 50%, #e8ecf1 100%);
-  background-attachment: fixed;
+  background: #f6f7fb;
   color: #303133;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
@@ -119,10 +118,8 @@ body {
 /* ═══ Utility Classes ═══ */
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
 }
 
@@ -155,23 +152,21 @@ body {
 
 /* Cards */
 .el-card {
-  background: rgba(255,255,255,0.7) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.5) !important;
-  border-radius: var(--radius-lg) !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-sm);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.2s, border-color 0.2s;
 }
 .el-card:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: #dbe3ee !important;
 }
 
 /* Table */
 .el-table {
-  --el-table-bg-color: transparent;
-  --el-table-tr-bg-color: transparent;
+  --el-table-bg-color: #ffffff;
+  --el-table-tr-bg-color: #ffffff;
   --el-table-header-bg-color: #fafbfc;
   --el-table-border-color: #ebeef5;
   --el-table-row-hover-bg-color: #f5f7fa;
@@ -197,10 +192,6 @@ body {
 .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
   background: #fafbfc;
 }
-.el-table__body tr {
-  animation: fadeSlideIn 0.25s ease forwards;
-  animation-delay: calc(var(--row-index, 0) * 0.02s);
-}
 
 /* Input */
 .el-input__wrapper {
@@ -221,10 +212,8 @@ body {
 /* Select / Dropdown */
 .el-select .el-input .el-select__caret { color: #909399; }
 .el-select-dropdown {
-  background: rgba(255,255,255,0.95) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.5) !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
   box-shadow: var(--shadow-lg) !important;
   border-radius: var(--radius-md) !important;
 }
@@ -244,11 +233,9 @@ body {
 
 /* Dialog */
 .el-dialog {
-  background: rgba(255,255,255,0.85) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.5) !important;
-  border-radius: var(--radius-lg) !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-xl) !important;
 }
 .el-dialog__header { border-bottom: 1px solid #f0f2f5; padding: 20px 24px; }
@@ -313,10 +300,8 @@ body {
 
 /* Message */
 .el-message {
-  background: rgba(255,255,255,0.9) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.5) !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-lg) !important;
 }

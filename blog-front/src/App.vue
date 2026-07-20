@@ -3,11 +3,6 @@
     <n-message-provider>
     <n-loading-bar-provider>
       <div class="app-root">
-        <div class="bg-blobs">
-          <div class="bg-blob blob-1"></div>
-          <div class="bg-blob blob-2"></div>
-          <div class="bg-blob blob-3"></div>
-        </div>
         <div class="app-container">
           <AppHeader />
           <main class="main-content">
@@ -53,62 +48,62 @@ function toggleTheme() {
 
 const themeOverrides = {
   common: {
-    primaryColor: '#409EFF',
-    primaryColorHover: '#66b1ff',
-    primaryColorPressed: '#3a8ee6',
-    primaryColorSuppl: '#409EFF',
-    bodyColor: '#f0f2f5',
+    primaryColor: '#2563eb',
+    primaryColorHover: '#1d4ed8',
+    primaryColorPressed: '#1e40af',
+    primaryColorSuppl: '#2563eb',
+    bodyColor: '#f7f8fb',
     cardColor: '#ffffff',
     modalColor: '#ffffff',
     popoverColor: '#ffffff',
-    borderColor: '#e8ecf0',
-    hoverColor: 'rgba(64,158,255,0.06)',
+    borderColor: '#e5e7eb',
+    hoverColor: 'rgba(37,99,235,0.06)',
     fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
     fontFamilyMono: "'JetBrains Mono', 'Fira Code', monospace",
-    textColorBase: '#303133',
-    textColor1: '#303133',
-    textColor2: '#909399',
-    textColor3: '#c0c4cc',
+    textColorBase: '#111827',
+    textColor1: '#111827',
+    textColor2: '#64748b',
+    textColor3: '#94a3b8',
     inputColor: '#ffffff',
     inputColorFocus: '#ffffff',
-    tagColor: 'rgba(64,158,255,0.08)',
+    tagColor: 'rgba(37,99,235,0.08)',
     successColor: '#67c23a',
     successColorHover: '#85ce61',
     warningColor: '#e6a23c',
     errorColor: '#f56c6c',
   },
   Button: {
-    textColor: '#409EFF',
-    border: '1px solid #409EFF',
-    borderHover: '1px solid #66b1ff',
-    borderFocus: '1px solid #409EFF',
-    borderPressed: '1px solid #3a8ee6',
-    colorHover: 'rgba(64,158,255,0.06)',
-    colorFocus: 'rgba(64,158,255,0.1)',
-    colorPressed: 'rgba(64,158,255,0.14)',
+    textColor: '#2563eb',
+    border: '1px solid #2563eb',
+    borderHover: '1px solid #1d4ed8',
+    borderFocus: '1px solid #2563eb',
+    borderPressed: '1px solid #1e40af',
+    colorHover: 'rgba(37,99,235,0.06)',
+    colorFocus: 'rgba(37,99,235,0.1)',
+    colorPressed: 'rgba(37,99,235,0.14)',
   },
   Input: {
     border: '1px solid #dcdfe6',
     borderHover: '1px solid #c0c4cc',
-    borderFocus: '1px solid #409EFF',
-    boxShadowFocus: '0 0 0 3px rgba(64,158,255,0.12)',
+    borderFocus: '1px solid #2563eb',
+    boxShadowFocus: '0 0 0 3px rgba(37,99,235,0.12)',
     placeholderColor: '#c0c4cc',
   },
   Tag: {
-    textColor: '#409EFF',
+    textColor: '#2563eb',
     colorBordered: 'transparent',
-    border: '1px solid rgba(64,158,255,0.3)',
+    border: '1px solid rgba(37,99,235,0.3)',
   },
   Pagination: {
     itemColor: '#ffffff',
-    itemColorActive: '#409EFF',
+    itemColorActive: '#2563eb',
     itemTextColor: '#606266',
     itemTextColorActive: '#ffffff',
     itemBorder: '1px solid #e4e7ed',
-    itemBorderActive: '1px solid #409EFF',
+    itemBorderActive: '1px solid #2563eb',
   },
-  LoadingBar: { colorLoading: '#409EFF' },
-  Spin: { color: '#409EFF' },
+  LoadingBar: { colorLoading: '#2563eb' },
+  Spin: { color: '#2563eb' },
 }
 </script>
 
@@ -116,69 +111,41 @@ const themeOverrides = {
 /* ═══ Reset & Base ═══ */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root {
+  --blog-bg: #f7f8fb;
+  --blog-surface: #ffffff;
+  --blog-surface-soft: #f1f5f9;
+  --blog-border: #e5e7eb;
+  --blog-border-strong: #d1d5db;
+  --blog-text: #111827;
+  --blog-muted: #64748b;
+  --blog-subtle: #94a3b8;
+  --blog-primary: #2563eb;
+  --blog-primary-dark: #1d4ed8;
+  --blog-accent: #0f766e;
+  --blog-warning: #b45309;
+  --blog-radius: 8px;
+  --blog-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
 body {
-  background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 50%, #e8ecf1 100%);
-  background-attachment: fixed;
-  color: #303133;
+  background:
+    linear-gradient(#eef2f7 1px, transparent 1px),
+    linear-gradient(90deg, #eef2f7 1px, transparent 1px),
+    var(--blog-bg);
+  background-size: 42px 42px;
+  color: var(--blog-text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-::selection { background: rgba(64,158,255,0.2); color: #303133; }
+::selection { background: rgba(37,99,235,0.18); color: var(--blog-text); }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #b0b8c4; }
-
-/* ═══ Background Blobs ═══ */
-.bg-blobs { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-
-.bg-blob {
-  position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.35;
-  will-change: transform;
-}
-
-.blob-1 {
-  width: 480px; height: 480px;
-  background: rgba(64,158,255,0.12);
-  top: -8%; right: -4%;
-  animation: blobFloat1 14s ease-in-out infinite;
-}
-
-.blob-2 {
-  width: 400px; height: 400px;
-  background: rgba(139,92,246,0.09);
-  bottom: -6%; left: -2%;
-  animation: blobFloat2 16s ease-in-out infinite;
-  animation-delay: -2s;
-}
-
-.blob-3 {
-  width: 350px; height: 350px;
-  background: rgba(16,185,129,0.08);
-  top: 50%; left: 40%;
-  animation: blobFloat3 18s ease-in-out infinite;
-  animation-delay: -5s;
-}
-
-@keyframes blobFloat1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -25px) scale(1.06); }
-  66% { transform: translate(-15px, 20px) scale(0.94); }
-}
-
-@keyframes blobFloat2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-25px, 20px) scale(1.04); }
-  66% { transform: translate(20px, -15px) scale(0.96); }
-}
-
-@keyframes blobFloat3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(18px, -28px) scale(1.05); }
-}
 
 /* ═══ App Shell ═══ */
 .app-root { min-height: 100vh; position: relative; }
@@ -189,7 +156,7 @@ body {
 
 /* ═══ Main Content ═══ */
 .main-content {
-  flex: 1; max-width: 860px; width: 100%; margin: 0 auto; padding: 24px 20px;
+  flex: 1; max-width: 1120px; width: 100%; margin: 0 auto; padding: 32px 24px 48px;
 }
 
 /* ═══ Page Transitions ═══ */
@@ -200,55 +167,51 @@ body {
 
 /* ═══ Utility Classes ═══ */
 .glass-card {
-  background: rgba(255,255,255,0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05);
+  background: var(--blog-surface);
+  border: 1px solid var(--blog-border);
+  border-radius: var(--blog-radius);
+  box-shadow: var(--blog-shadow);
 }
 
 /* ═══ Markdown Content ═══ */
-.markdown-body { color: #4a5568; line-height: 1.85; font-size: 16px; }
-.markdown-body h1 { font-size: 2em; margin: 0.67em 0; color: #1a202c; font-weight: 700; }
+.markdown-body { color: #334155; line-height: 1.85; font-size: 16px; }
+.markdown-body h1 { font-size: 2em; margin: 0.67em 0; color: #0f172a; font-weight: 700; }
 .markdown-body h2 {
-  font-size: 1.5em; margin: 1.3em 0 0.6em; color: #409EFF;
+  font-size: 1.5em; margin: 1.3em 0 0.6em; color: #0f172a;
   font-weight: 600;
   padding-bottom: 6px;
-  background: linear-gradient(90deg, #409EFF, #10b981, transparent) left bottom no-repeat;
-  background-size: 100% 2px;
+  border-bottom: 1px solid var(--blog-border);
 }
-.markdown-body h3 { font-size: 1.17em; margin: 1em 0 0.5em; color: #2d3748; }
+.markdown-body h3 { font-size: 1.17em; margin: 1em 0 0.5em; color: #0f172a; }
 .markdown-body p { margin-bottom: 0.9em; }
 .markdown-body a {
-  color: #409EFF; text-decoration: none; border-bottom: 1px dashed #b3d8ff;
+  color: var(--blog-primary); text-decoration: none; border-bottom: 1px solid rgba(37,99,235,0.25);
   transition: all 0.2s;
 }
-.markdown-body a:hover { border-bottom-style: solid; color: #337ecc; }
-.markdown-body strong { color: #1a202c; font-weight: 600; }
+.markdown-body a:hover { color: var(--blog-primary-dark); }
+.markdown-body strong { color: #0f172a; font-weight: 600; }
 .markdown-body code {
-  background: #f5f7fa; color: #409EFF; padding: 3px 8px; border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace; font-size: 0.88em; border: 1px solid #e8ecf0;
+  background: #eef2ff; color: #1d4ed8; padding: 3px 8px; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em; border: 1px solid #dbeafe;
 }
 .markdown-body pre {
-  background: #f8f9fb; border: 1px solid #e8ecf0; border-radius: 10px;
+  background: #0f172a; border: 1px solid #111827; border-radius: 8px;
   padding: 20px; overflow-x: auto; margin: 16px 0;
 }
-.markdown-body pre code { background: none; border: none; padding: 0; color: #4a5568; font-size: 14px; line-height: 1.6; }
+.markdown-body pre code { background: none; border: none; padding: 0; color: #e5e7eb; font-size: 14px; line-height: 1.6; }
 .markdown-body blockquote {
-  border-left: 3px solid;
-  border-image: linear-gradient(180deg, #409EFF, #8b5cf6) 1;
+  border-left: 3px solid var(--blog-primary);
   padding: 12px 20px; margin: 16px 0;
-  background: linear-gradient(135deg, #f8f9fb, #f5f7fa);
-  border-radius: 0 8px 8px 0; color: #606266;
+  background: #f8fafc;
+  border-radius: 0 8px 8px 0; color: #475569;
 }
 .markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin-bottom: 0.9em; }
 .markdown-body li { margin-bottom: 0.3em; }
-.markdown-body img { max-width: 100%; border-radius: 8px; border: 1px solid #e8ecf0; }
-.markdown-body hr { border: none; height: 1px; background: linear-gradient(90deg, transparent, #d0d5dd, transparent); margin: 2em 0; }
+.markdown-body img { max-width: 100%; border-radius: 8px; border: 1px solid var(--blog-border); }
+.markdown-body hr { border: none; height: 1px; background: var(--blog-border); margin: 2em 0; }
 .markdown-body table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-.markdown-body th { background: #f5f7fa; padding: 10px 16px; text-align: left; color: #409EFF; border: 1px solid #e8ecf0; }
-.markdown-body td { padding: 8px 16px; border: 1px solid #e8ecf0; }
+.markdown-body th { background: #f8fafc; padding: 10px 16px; text-align: left; color: #0f172a; border: 1px solid var(--blog-border); }
+.markdown-body td { padding: 8px 16px; border: 1px solid var(--blog-border); }
 
 /* ═══ Theme Toggle ═══ */
 .theme-toggle {
@@ -271,19 +234,24 @@ body {
 
 /* ═══ Dark Mode ═══ */
 [data-theme="dark"] body {
-  background: #0f172a;
+  --blog-bg: #0b1120;
+  --blog-surface: #111827;
+  --blog-surface-soft: #172033;
+  --blog-border: rgba(255,255,255,0.08);
+  --blog-border-strong: rgba(255,255,255,0.14);
+  --blog-text: #e5e7eb;
+  --blog-muted: #94a3b8;
+  --blog-subtle: #64748b;
+  background:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+    var(--blog-bg);
+  background-size: 42px 42px;
 }
-
-[data-theme="dark"] .bg-blob {
-  filter: blur(100px); opacity: 0.22;
-}
-[data-theme="dark"] .blob-1 { background: rgba(64,158,255,0.16); }
-[data-theme="dark"] .blob-2 { background: rgba(139,92,246,0.12); }
-[data-theme="dark"] .blob-3 { background: rgba(16,185,129,0.09); }
 
 [data-theme="dark"] .glass-card {
-  background: rgba(30, 41, 59, 0.7);
-  border-color: rgba(255,255,255,0.06);
+  background: var(--blog-surface);
+  border-color: var(--blog-border);
 }
 
 /* Header */
@@ -359,9 +327,9 @@ body {
 
 /* Theme toggle dark */
 [data-theme="dark"] .theme-toggle {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(255,255,255,0.08);
-  color: #94a3b8;
+  background: var(--blog-surface);
+  border-color: var(--blog-border);
+  color: var(--blog-muted);
 }
 [data-theme="dark"] .theme-toggle:hover { color: #fbbf24; }
 
@@ -393,4 +361,14 @@ body {
 [data-theme="dark"] .search-input { color: #e2e8f0; }
 [data-theme="dark"] .search-input::placeholder { color: #64748b; }
 [data-theme="dark"] .search-hint { color: #94a3b8; }
+
+@media (max-width: 760px) {
+  .main-content {
+    padding: 20px 16px 40px;
+  }
+  .theme-toggle {
+    left: 16px;
+    bottom: 18px;
+  }
+}
 </style>

@@ -127,56 +127,105 @@ async function doDelete(id) {
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.page-title { font-size: 18px; color: #303133; font-weight: 600; margin: 0; }
-.toolbar { display: flex; align-items: center; gap: 12px; }
-.filter-group { display: flex; align-items: center; gap: 8px; }
-.filter-label { font-size: 12px; color: #909399; }
-.filter-select { width: 100px; }
-
-.table-container {
-  background: rgba(255,255,255,0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 12px; overflow: hidden;
+.article-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.article-title { color: #303133; font-weight: 500; }
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.page-title {
+  font-size: 20px;
+  color: #111827;
+  font-weight: 700;
+  margin: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.filter-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.filter-select { width: 108px; }
+
+.table-container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.article-title { color: #111827; font-weight: 600; }
 
 .status-badge {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 500;
-  padding: 2px 10px; border-radius: 4px;
+  padding: 3px 9px; border-radius: 999px;
 }
-.status-badge.published { color: #67c23a; background: #f0f9eb; }
-.status-badge.draft { color: #909399; background: #f5f7fa; }
+.status-badge.published { color: #047857; background: #ecfdf5; }
+.status-badge.draft { color: #64748b; background: #f1f5f9; }
 
 .visibility-badge {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 500;
-  padding: 2px 10px; border-radius: 4px;
+  padding: 3px 9px; border-radius: 999px;
 }
-.visibility-badge.public { color: #409EFF; background: #ecf5ff; }
-.visibility-badge.rag_only { color: #8b5cf6; background: #f5f0ff; }
-.visibility-badge.private { color: #909399; background: #f5f7fa; }
+.visibility-badge.public { color: #1d4ed8; background: #eff6ff; }
+.visibility-badge.rag_only { color: #6d28d9; background: #f5f3ff; }
+.visibility-badge.private { color: #64748b; background: #f1f5f9; }
 
 .view-count { font-size: 13px; color: #909399; }
 .time-cell { font-size: 12px; color: #909399; }
 
-.actions { display: flex; gap: 6px; justify-content: center; }
+.actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
 .action-btn {
   display: inline-flex; align-items: center; gap: 3px;
-  padding: 5px 10px; border-radius: 5px; border: 1px solid transparent;
+  padding: 6px 9px; border-radius: 6px; border: 1px solid transparent;
   font-size: 11px; cursor: pointer;
   transition: all 0.2s; background: none;
 }
-.action-btn.preview { color: #10b981; border-color: #d1fae5; }
-.action-btn.preview:hover { background: #ecfdf5; border-color: #10b981; transform: translateY(-1px); }
-.action-btn.edit { color: #409EFF; border-color: #d9ecff; }
-.action-btn.edit:hover { background: #ecf5ff; border-color: #409EFF; transform: translateY(-1px); }
-.action-btn.delete { color: #f56c6c; border-color: #fde2e2; }
-.action-btn.delete:hover { background: #fef0f0; border-color: #f56c6c; transform: translateY(-1px); }
+.action-btn.preview { color: #047857; border-color: #d1fae5; }
+.action-btn.preview:hover { background: #ecfdf5; border-color: #10b981; }
+.action-btn.edit { color: #1d4ed8; border-color: #dbeafe; }
+.action-btn.edit:hover { background: #eff6ff; border-color: #2563eb; }
+.action-btn.delete { color: #dc2626; border-color: #fee2e2; }
+.action-btn.delete:hover { background: #fef2f2; border-color: #ef4444; }
 
 .pagination { margin-top: 20px; display: flex; justify-content: flex-end; }
+
+@media (max-width: 820px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 </style>

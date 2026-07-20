@@ -1,151 +1,428 @@
 <template>
   <div class="dashboard">
-    <div class="page-header">
-      <h3 class="page-title">仪表盘</h3>
-      <span class="page-badge">运行中</span>
+    <div class="page-hero">
+      <div>
+        <span class="eyebrow">Overview</span>
+        <h2>内容工作台</h2>
+        <p>查看发布状态、评论反馈和近期内容，让博客运营有一个清晰入口。</p>
+      </div>
+      <div class="hero-actions">
+        <el-button @click="$router.push('/articles')">管理文章</el-button>
+        <el-button type="primary" @click="$router.push('/articles/create')">新建文章</el-button>
+      </div>
     </div>
 
-    <el-row :gutter="20" class="stat-row">
-      <el-col :span="8" v-for="(item, i) in statItems" :key="item.label">
+    <el-row :gutter="16" class="stat-row">
+      <el-col :xs="24" :sm="12" :lg="6" v-for="item in statItems" :key="item.label">
         <div class="stat-card">
-          <div class="stat-icon" :style="{ background: item.bg, color: item.color }">
-            <span v-html="item.icon"></span>
-          </div>
-          <div class="stat-body">
-            <span class="num" :style="{ color: item.color }">{{ displayValues[i] }}</span>
-            <span class="label">{{ item.label }}</span>
-          </div>
+          <span class="stat-label">{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+          <span class="stat-hint">{{ item.hint }}</span>
         </div>
       </el-col>
     </el-row>
+
+    <div class="dashboard-grid">
+      <section class="panel work-panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Workflow</span>
+            <h3>今日关注</h3>
+          </div>
+        </div>
+        <div class="todo-list">
+          <router-link to="/comments" class="todo-item">
+            <span class="todo-dot warning"></span>
+            <div>
+              <strong>{{ stats.commentCount }}</strong>
+              <p>条评论需要持续关注审核与回复。</p>
+            </div>
+          </router-link>
+          <router-link to="/articles" class="todo-item">
+            <span class="todo-dot primary"></span>
+            <div>
+              <strong>{{ stats.articleCount }}</strong>
+              <p>篇文章构成当前公开内容池。</p>
+            </div>
+          </router-link>
+          <router-link to="/moments" class="todo-item">
+            <span class="todo-dot success"></span>
+            <div>
+              <strong>{{ stats.momentCount }}</strong>
+              <p>条说说可用于补充日常动态。</p>
+            </div>
+          </router-link>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Recent</span>
+            <h3>最近文章</h3>
+          </div>
+          <router-link to="/articles">全部</router-link>
+        </div>
+        <div class="article-list" v-loading="loading">
+          <router-link
+            v-for="article in recentArticles"
+            :key="article.id"
+            :to="`/articles/${article.id}/edit`"
+            class="article-row"
+          >
+            <div>
+              <strong>{{ article.title }}</strong>
+              <span>{{ article.createTime ? article.createTime.substring(0, 16) : '-' }}</span>
+            </div>
+            <em :class="article.status === 1 ? 'published' : 'draft'">
+              {{ article.status === 1 ? '已发布' : '草稿' }}
+            </em>
+          </router-link>
+          <el-empty v-if="!loading && recentArticles.length === 0" description="暂无文章" :image-size="72" />
+        </div>
+      </section>
+
+      <section class="panel comments-panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Feedback</span>
+            <h3>最新评论</h3>
+          </div>
+          <router-link to="/comments">处理</router-link>
+        </div>
+        <div class="comment-list" v-loading="loading">
+          <div v-for="comment in recentComments" :key="comment.id" class="comment-row">
+            <div class="comment-avatar">{{ (comment.nickname || '访').charAt(0) }}</div>
+            <div class="comment-body">
+              <strong>{{ comment.nickname || '访客' }}</strong>
+              <p>{{ comment.content || '暂无内容' }}</p>
+            </div>
+          </div>
+          <el-empty v-if="!loading && recentComments.length === 0" description="暂无评论" :image-size="72" />
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getAdminArticles, getCategories, getAdminComments } from '../api/index.js'
+import { getAdminArticles, getCategories, getAdminComments, getAdminMoments } from '../api/index.js'
 
-const stats = ref({ articleCount: 0, categoryCount: 0, commentCount: 0 })
-const displayValues = ref([0, 0, 0])
+const loading = ref(false)
+const stats = ref({ articleCount: 0, categoryCount: 0, commentCount: 0, momentCount: 0 })
+const recentArticles = ref([])
+const recentComments = ref([])
 
 const statItems = computed(() => [
-  {
-    label: '文章',
-    value: stats.value.articleCount,
-    color: '#409EFF',
-    bg: 'linear-gradient(135deg, #ecf5ff, #d9ecff)',
-    icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
-  },
-  {
-    label: '分类',
-    value: stats.value.categoryCount,
-    color: '#10b981',
-    bg: 'linear-gradient(135deg, #ecfdf5, #d1fae5)',
-    icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
-  },
-  {
-    label: '留言',
-    value: stats.value.commentCount,
-    color: '#f59e0b',
-    bg: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
-    icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
-  }
+  { label: '文章', value: stats.value.articleCount, hint: '公开内容资产' },
+  { label: '分类', value: stats.value.categoryCount, hint: '知识结构入口' },
+  { label: '评论', value: stats.value.commentCount, hint: '读者互动反馈' },
+  { label: '说说', value: stats.value.momentCount, hint: '轻量动态记录' }
 ])
 
-function animateValue(idx, from, to) {
-  const duration = 1000
-  const start = performance.now()
-  function tick(now) {
-    const elapsed = now - start
-    const progress = Math.min(elapsed / duration, 1)
-    const eased = 1 - Math.pow(1 - progress, 3)
-    displayValues.value[idx] = Math.round(from + (to - from) * eased)
-    if (progress < 1) requestAnimationFrame(tick)
-  }
-  requestAnimationFrame(tick)
-}
+onMounted(fetchDashboard)
 
-onMounted(async () => {
-  const [aRes, cRes, mRes] = await Promise.all([
-    getAdminArticles({ page: 1, size: 1 }),
-    getCategories(),
-    getAdminComments({ page: 1, size: 1 })
-  ])
-  const newStats = {
-    articleCount: aRes.data.data.total,
-    categoryCount: cRes.data.data.length,
-    commentCount: mRes.data.data.total
+async function fetchDashboard() {
+  loading.value = true
+  try {
+    const [articleRes, categoryRes, commentRes, momentRes] = await Promise.all([
+      getAdminArticles({ page: 1, size: 5 }),
+      getCategories(),
+      getAdminComments({ page: 1, size: 5 }),
+      getAdminMoments({ page: 1, size: 1 })
+    ])
+
+    recentArticles.value = articleRes.data.data.records || []
+    recentComments.value = commentRes.data.data.records || []
+    stats.value = {
+      articleCount: articleRes.data.data.total || 0,
+      categoryCount: categoryRes.data.data.length || 0,
+      commentCount: commentRes.data.data.total || 0,
+      momentCount: momentRes.data.data.total || 0
+    }
+  } finally {
+    loading.value = false
   }
-  stats.value = newStats
-  animateValue(0, 0, newStats.articleCount)
-  animateValue(1, 0, newStats.categoryCount)
-  animateValue(2, 0, newStats.commentCount)
-})
+}
 </script>
 
 <style scoped>
-.page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-.page-title { font-size: 18px; color: #303133; font-weight: 600; margin: 0; }
-.page-badge {
-  font-size: 11px; color: #10b981; padding: 2px 10px; border-radius: 12px;
-  background: linear-gradient(135deg, #ecfdf5, #d1fae5); font-weight: 500;
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.page-hero,
+.panel,
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.page-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+}
+
+.eyebrow {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.page-hero h2 {
+  color: #111827;
+  font-size: 26px;
+  line-height: 1.2;
+  margin: 6px 0 8px;
+}
+
+.page-hero p {
+  color: #64748b;
+  margin: 0;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.stat-row {
+  row-gap: 16px;
 }
 
 .stat-card {
-  display: flex; align-items: center; gap: 18px;
-  background: rgba(255,255,255,0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 14px; padding: 28px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 1px 3px rgba(0,0,0,0.04);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative; overflow: hidden;
-}
-/* Top gradient bar */
-.stat-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 3px;
-  border-radius: 14px 14px 0 0;
-}
-.stat-card:nth-child(1)::before { background: linear-gradient(90deg, #409EFF, #66b1ff); }
-.stat-card:nth-child(2)::before { background: linear-gradient(90deg, #10b981, #34d399); }
-.stat-card:nth-child(3)::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-
-/* Grid texture overlay */
-.stat-card::after {
-  content: '';
-  position: absolute; inset: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(64,158,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(64,158,255,0.02) 1px, transparent 1px);
-  background-size: 20px 20px;
-  -webkit-mask-image: radial-gradient(circle at 30% 20%, black 40%, transparent 70%);
-  mask-image: radial-gradient(circle at 30% 20%, black 40%, transparent 70%);
+  padding: 18px;
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.stat-card:hover {
-  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-  transform: translateY(-4px);
+.stat-label {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.stat-icon {
-  width: 56px; height: 56px; border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.3s;
-  position: relative; z-index: 1;
-}
-.stat-card:hover .stat-icon {
-  transform: scale(1.08);
-}
-
-.stat-body { display: flex; flex-direction: column; position: relative; z-index: 1; }
-.num {
-  font-size: 36px; font-weight: 800; line-height: 1.1;
+.stat-card strong {
+  color: #111827;
+  font-size: 34px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
 }
-.label { margin-top: 4px; color: #909399; font-size: 13px; font-weight: 500; }
+
+.stat-hint {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.2fr;
+  gap: 18px;
+}
+
+.panel {
+  padding: 20px;
+}
+
+.work-panel {
+  grid-row: span 2;
+}
+
+.comments-panel {
+  grid-column: 2;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.panel-head h3 {
+  color: #111827;
+  font-size: 18px;
+  margin: 3px 0 0;
+}
+
+.panel-head a {
+  color: #64748b;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.panel-head a:hover {
+  color: #2563eb;
+}
+
+.todo-list,
+.article-list,
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.todo-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.todo-item:hover {
+  border-color: #bfdbfe;
+  background: #f8fafc;
+}
+
+.todo-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.todo-dot.warning { background: #f59e0b; }
+.todo-dot.primary { background: #2563eb; }
+.todo-dot.success { background: #10b981; }
+
+.todo-item strong {
+  color: #111827;
+  font-size: 18px;
+}
+
+.todo-item p {
+  color: #64748b;
+  font-size: 13px;
+  margin: 3px 0 0;
+  line-height: 1.55;
+}
+
+.article-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.article-row:last-child {
+  border-bottom: none;
+}
+
+.article-row strong {
+  color: #111827;
+  display: block;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.article-row span {
+  color: #94a3b8;
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.article-row em {
+  flex-shrink: 0;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+.article-row em.published {
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.article-row em.draft {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.comment-row {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.comment-row:last-child {
+  border-bottom: none;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.comment-body {
+  min-width: 0;
+}
+
+.comment-body strong {
+  display: block;
+  color: #111827;
+  font-size: 13px;
+}
+
+.comment-body p {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 3px 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comments-panel {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 </style>
