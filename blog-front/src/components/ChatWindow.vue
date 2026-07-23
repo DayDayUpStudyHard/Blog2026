@@ -47,7 +47,10 @@
 
             <!-- Streaming 指示器 -->
             <div v-if="streaming" class="msg-wrapper assistant">
-              <div class="msg-bubble streaming"><span class="dot-pulse"></span></div>
+              <div class="msg-bubble streaming">
+                <span class="streaming-text" v-if="streamingStatus">{{ streamingStatus }}</span>
+                <span class="dot-pulse" v-else></span>
+              </div>
             </div>
           </div>
 
@@ -81,6 +84,7 @@ const panelOpen = ref(false)
 const inputText = ref('')
 const messages = ref([])
 const streaming = ref(false)
+const streamingStatus = ref('')
 const suggestions = ref([
   '这个博客主要讲什么？',
   'Spring Boot怎么部署？',
@@ -129,6 +133,7 @@ async function send(msg) {
   const assistantMsg = { role: 'assistant', content: '', sources: [] }
   messages.value.push(assistantMsg)
   streaming.value = true
+  streamingStatus.value = '正在检索...'
 
   try {
     const history = messages.value.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
@@ -157,7 +162,10 @@ async function send(msg) {
         } else if (line.startsWith('data: ')) {
           try {
             const data = JSON.parse(line.slice(6))
-            if (eventType === 'chunk') {
+            if (eventType === 'status') {
+              streamingStatus.value = data.status === 'thinking' ? '正在生成回复...' : (data.status === 'searching' ? '正在检索...' : data.status)
+            } else if (eventType === 'chunk') {
+              streamingStatus.value = ''
               assistantMsg.content += data.content
               scrollBottom()
             } else if (eventType === 'sources') {
@@ -172,8 +180,9 @@ async function send(msg) {
       }
     }
   } catch (e) {
-    assistantMsg.content += '\n\n*网络错误，请重试*'
+    assistantMsg.content += '\n\n*网络错误，请确认服务是否启动*'
   } finally {
+    streamingStatus.value = ''
     streaming.value = false
     scrollBottom()
   }
@@ -307,6 +316,10 @@ async function send(msg) {
 .source-snippet { font-size: 11px; color: #94a3b8; margin-left: 6px; }
 
 /* Streaming 动画 */
+.streaming-text {
+  font-size: 12px;
+  color: #94a3b8;
+}
 .streaming .dot-pulse::after {
   content: '...';
   animation: dots 1.4s infinite;

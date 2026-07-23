@@ -62,6 +62,14 @@
                 <span class="menu-label">说说管理</span>
               </template>
             </el-menu-item>
+            <el-menu-item index="/knowledge">
+              <template #title>
+                <span class="menu-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"/><path d="M8 7h8"/><path d="M8 11h6"/></svg>
+                </span>
+                <span class="menu-label">知识库</span>
+              </template>
+            </el-menu-item>
             <el-menu-item index="/about-page">
               <template #title>
                 <span class="menu-icon">
@@ -109,6 +117,32 @@
             <span class="topbar-path">{{ pageTitle }}</span>
           </div>
           <div class="topbar-actions">
+            <el-popover placement="bottom-end" width="320" trigger="click" @show="fetchNotifications">
+              <template #reference>
+                <button class="theme-toggle notification-btn" title="消息中心">
+                  <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  </el-badge>
+                </button>
+              </template>
+              <div class="notification-panel">
+                <div class="notification-head">
+                  <strong>消息中心</strong>
+                  <button @click="markAllRead">全部已读</button>
+                </div>
+                <div v-if="notifications.length === 0" class="notification-empty">暂无通知</div>
+                <button
+                  v-for="item in notifications"
+                  :key="item.id"
+                  class="notification-item"
+                  :class="{ unread: item.readStatus === 0 }"
+                  @click="markRead(item)"
+                >
+                  <strong>{{ item.title }}</strong>
+                  <span>{{ item.content }}</span>
+                </button>
+              </div>
+            </el-popover>
             <button class="theme-toggle" @click="themeStore.toggle" :title="themeStore.isDark ? '切换亮色模式' : '切换暗色模式'">
               <svg v-if="!themeStore.isDark" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -131,16 +165,20 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onBeforeUnmount, onMounted, computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user.js'
 import { useThemeStore } from '../stores/theme.js'
+import { getKbNotifications, getKbUnreadCount, readAllKbNotifications, readKbNotification } from '../api/index.js'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const themeStore = useThemeStore()
 const blogFrontUrl = (import.meta.env.VITE_BLOG_FRONT || '') + '/'
+const unreadCount = ref(0)
+const notifications = ref([])
+let notificationTimer = null
 
 const pageTitle = computed(() => {
   const map = {
@@ -151,6 +189,7 @@ const pageTitle = computed(() => {
     '/tags': '标签管理',
     '/comments': '留言管理',
     '/moments': '说说管理',
+    '/knowledge': '知识库',
     '/about-page': '关于页面',
     '/logs': '操作日志',
     '/settings': '个人设置',
@@ -162,12 +201,43 @@ const pageTitle = computed(() => {
 onMounted(async () => {
   try {
     await userStore.fetchUserInfo()
+    await fetchUnreadCount()
+    notificationTimer = window.setInterval(fetchUnreadCount, 8000)
   } catch { userStore.logout(); router.push('/login') }
+})
+
+onBeforeUnmount(() => {
+  if (notificationTimer) window.clearInterval(notificationTimer)
 })
 
 function logout() {
   userStore.logout()
   router.push('/login')
+}
+
+async function fetchUnreadCount() {
+  try {
+    const res = await getKbUnreadCount()
+    unreadCount.value = Number(res.data.data?.count) || 0
+  } catch {}
+}
+
+async function fetchNotifications() {
+  const res = await getKbNotifications()
+  notifications.value = res.data.data || []
+  await fetchUnreadCount()
+}
+
+async function markRead(item) {
+  await readKbNotification(item.id)
+  item.readStatus = 1
+  await fetchUnreadCount()
+}
+
+async function markAllRead() {
+  await readAllKbNotifications()
+  notifications.value = notifications.value.map(item => ({ ...item, readStatus: 1 }))
+  await fetchUnreadCount()
 }
 </script>
 
@@ -281,6 +351,58 @@ function logout() {
   color: #909399; cursor: pointer; transition: all 0.2s;
 }
 .theme-toggle:hover { color: #f59e0b; border-color: #fef3c7; background: #fffbeb; }
+.notification-btn :deep(.el-badge__content) {
+  border: none;
+}
+.notification-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.notification-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.notification-head button {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 12px;
+}
+.notification-empty {
+  color: #94a3b8;
+  font-size: 13px;
+  padding: 16px 0;
+  text-align: center;
+}
+.notification-item {
+  text-align: left;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.notification-item.unread {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+.notification-item strong {
+  color: #111827;
+  font-size: 13px;
+}
+.notification-item span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .logout-btn {
   display: flex; align-items: center; padding: 6px 10px;
   background: none; border: 1px solid transparent; border-radius: 6px;

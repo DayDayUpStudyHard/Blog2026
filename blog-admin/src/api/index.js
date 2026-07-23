@@ -65,4 +65,33 @@ export function updateAbout(data) { return api.put('/api/admin/about', data) }
 
 export function getOperationLogs(params) { return api.get('/api/admin/logs', { params }) }
 
+export function getKbSpaces() { return api.get('/api/admin/kb/spaces') }
+export function createKbSpace(data) { return api.post('/api/admin/kb/spaces', data) }
+export function updateKbSpace(id, data) { return api.put(`/api/admin/kb/spaces/${id}`, data) }
+export function deleteKbSpace(id) { return api.delete(`/api/admin/kb/spaces/${id}`) }
+
+export function getKbDocuments(params) { return api.get('/api/admin/kb/documents', { params }) }
+export function getKbDocument(id) { return api.get(`/api/admin/kb/documents/${id}`) }
+export function getKbDocumentChunks(id) { return api.get(`/api/admin/kb/documents/${id}/chunks`) }
+export function uploadKbDocument(spaceId, file, title = '') {
+  const formData = new FormData()
+  formData.append('spaceId', spaceId)
+  formData.append('file', file)
+  if (title) formData.append('title', title)
+  return api.post('/api/admin/kb/documents/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
+export function importDebugRecord() { return api.post('/api/admin/kb/documents/import-debug-record') }
+export function deleteKbDocument(id) { return api.delete(`/api/admin/kb/documents/${id}`) }
+export function restoreKbDocument(id) { return api.post(`/api/admin/kb/documents/${id}/restore`) }
+export function permanentDeleteKbDocument(id) { return api.delete(`/api/admin/kb/documents/${id}/permanent`) }
+export function reparseKbDocument(id) { return api.post(`/api/admin/kb/documents/${id}/reparse`) }
+export function reindexKbDocument(id) { return api.post(`/api/admin/kb/documents/${id}/reindex`) }
+export function getKbJob(id) { return api.get(`/api/admin/kb/jobs/${id}`) }
+export function testKbQa(data) { return api.post('/api/admin/kb/qa/test', data) }
+
+export function getKbNotifications(params) { return api.get('/api/admin/kb/notifications', { params }) }
+export function getKbUnreadCount() { return api.get('/api/admin/kb/notifications/unread-count') }
+export function readKbNotification(id) { return api.put(`/api/admin/kb/notifications/${id}/read`) }
+export function readAllKbNotifications() { return api.put('/api/admin/kb/notifications/read-all') }
+
 export default api

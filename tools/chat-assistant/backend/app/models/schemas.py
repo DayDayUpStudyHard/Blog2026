@@ -27,3 +27,25 @@ class SSEChunk(BaseModel):
 
 class SuggestionResponse(BaseModel):
     suggestions: List[str]
+
+
+class KbIngestRequest(BaseModel):
+    documentId: int
+    jobId: int
+    spaceId: int
+    title: str
+    filePath: str
+    fileType: str
+
+
+class KbReindexRequest(BaseModel):
+    documentId: int
+    jobId: int
+
+
+class KbQaRequest(BaseModel):
+    message: str
+    spaceId: Optional[int] = None
+    documentId: Optional[int] = None
+    includeArticles: bool = True
+    topK: int = 5

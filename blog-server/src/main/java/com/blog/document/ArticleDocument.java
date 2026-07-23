@@ -50,6 +50,13 @@ public class ArticleDocument {
     @Field(type = FieldType.Keyword)
     private String visibility;
 
+    /**
+     * 文章语义向量（1536 维，cosine 相似度，ES 8.x 默认）。
+     * 索引时调用 embedding API 生成，用于 kNN 语义搜索。
+     */
+    @Field(type = FieldType.Dense_Vector, dims = 1536)
+    private float[] embedding;
+
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
     private LocalDateTime createTime;
 }
