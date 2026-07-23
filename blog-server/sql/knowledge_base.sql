@@ -1,6 +1,8 @@
 -- Blog2026 个人知识库 RAG 扩展表
 -- 执行方式：mysql -u root -p123456 blog2026 < blog-server/sql/knowledge_base.sql
 
+SET NAMES utf8mb4;
+
 CREATE TABLE IF NOT EXISTS kb_space (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -143,3 +145,16 @@ CREATE TABLE IF NOT EXISTS kb_eval_case (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 默认知识空间：避免第一次进入后台知识库时为空。
+INSERT INTO kb_space (name, description, icon, color, sort, enabled, deleted)
+SELECT '项目复盘', '项目 Debug 记录、架构决策和复盘资料', 'bug', '#2563eb', 0, 1, 0
+WHERE NOT EXISTS (SELECT 1 FROM kb_space WHERE name = '项目复盘' AND deleted = 0);
+
+INSERT INTO kb_space (name, description, icon, color, sort, enabled, deleted)
+SELECT '学习笔记', '日常学习资料、技术文章摘录和知识点整理', 'book', '#10b981', 10, 1, 0
+WHERE NOT EXISTS (SELECT 1 FROM kb_space WHERE name = '学习笔记' AND deleted = 0);
+
+INSERT INTO kb_space (name, description, icon, color, sort, enabled, deleted)
+SELECT '面试题库', '面试八股、项目问答和复习材料', 'target', '#7c3aed', 20, 1, 0
+WHERE NOT EXISTS (SELECT 1 FROM kb_space WHERE name = '面试题库' AND deleted = 0);
