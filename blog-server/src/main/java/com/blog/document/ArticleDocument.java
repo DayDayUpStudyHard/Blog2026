@@ -51,10 +51,10 @@ public class ArticleDocument {
     private String visibility;
 
     /**
-     * 文章语义向量（1536 维，cosine 相似度，ES 8.x 默认）。
+     * 文章语义向量（默认 Qwen3-Embedding-4B 为 2560 维，cosine 相似度）。
      * 索引时调用 embedding API 生成，用于 kNN 语义搜索。
      */
-    @Field(type = FieldType.Dense_Vector, dims = 1536)
+    @Field(type = FieldType.Dense_Vector, dims = 2560)
     private float[] embedding;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)

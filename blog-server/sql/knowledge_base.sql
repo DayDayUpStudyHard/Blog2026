@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS kb_document (
     status VARCHAR(30) DEFAULT 'UPLOADED',
     chunk_count INT DEFAULT 0,
     embedding_model VARCHAR(100),
-    embedding_dim INT DEFAULT 1536,
+    embedding_dim INT DEFAULT 2560,
     index_name VARCHAR(100) DEFAULT 'kb_chunks',
     last_index_time DATETIME NULL,
     error_message TEXT,

@@ -4,6 +4,80 @@
 
 ---
 
+## RAG 文档上传后消息中心提示 Python 服务 404 / 索引失败
+
+**日期**：2026-07-24
+
+### 现象
+
+管理端连续上传多个知识库文档后，右上角消息中心提示：
+
+```text
+知识库任务触发失败
+调用 Python 知识库服务失败: Python 服务返回404: {"detail":"Not Found"}
+```
+
+后续即使文档和切片已经写入 MySQL，知识库检索仍为空，`kb_document_chunk.index_status` 全部为 `FAILED`。
+
+### 原因
+
+1. 8088 端口曾运行旧版 `chat-assistant` 进程，旧进程没有 `/internal/kb/ingest/jobs` 等知识库内部路由，因此 Java 调 Python 返回 404。
+2. 当前使用的 `Qwen/Qwen3-Embedding-4B` 实际返回 2560 维向量，但 `.env`、README 示例、SQL 默认值和 ES `kb_chunks` mapping 仍按 1536 维创建，导致 ES 写入报 dense_vector 维度不匹配。
+3. 多个文档并发重建索引时，多个 Python 后台任务同时创建 `kb_chunks`，其中一个创建成功后，其他任务收到 `resource_already_exists_exception`，之前被误判为索引不可用。
+4. Python 导入流程原本只要切片落库就可能把文档标记为 `READY`，即使 0 个 chunk 真正写入 ES，也会造成“状态成功但 RAG 检索不到”的假象。
+
+### 修复
+
+**修改文件：**
+
+| 文件 | 改动 |
+|------|------|
+| `tools/chat-assistant/backend/app/services/embedding_service.py` | 新增 embedding 返回维度校验，配置和真实向量不一致时给出明确错误 |
+| `tools/chat-assistant/backend/app/services/es_service.py` | `kb_chunks` 自动校验 dense_vector 维度；空旧索引可重建；并发创建时把“索引已存在”重新校验为成功 |
+| `tools/chat-assistant/backend/app/services/kb_service.py` | 导入/重建索引时统计 ES 写入成功数；0 个 chunk 写入成功时任务进入 `FAILED`，不再标记 `READY` |
+| `tools/chat-assistant/backend/.env.example` | 将 `Qwen/Qwen3-Embedding-4B` 示例维度改为 2560 |
+| `tools/chat-assistant/backend/app/config.py` | Python embedding 默认维度改为 2560 |
+| `blog-server/sql/knowledge_base.sql` | `kb_document.embedding_dim` 默认值改为 2560 |
+| `blog-server/src/main/resources/application.yml` | Java 默认 embedding provider 统一为 SiliconFlow/Qwen3，默认维度改为 2560 |
+| `blog-server/src/main/java/com/blog/service/impl/KnowledgeBaseServiceImpl.java` | Java 侧知识库文档 metadata 默认维度改为 2560 |
+| `blog-server/src/main/java/com/blog/document/ArticleDocument.java` | 文章 ES dense_vector 维度与当前 Qwen3 配置统一为 2560 |
+| `README.md`、`docs/knowledge-base-rag-plan.md` | 补充 Qwen3 embedding 为 2560 维、切换模型后需要同步重建 ES 向量索引 |
+
+### 本地数据修复
+
+- 已停止旧版 `chat-assistant` 进程并重新启动 Python 服务，`/openapi.json` 已包含 `/internal/kb/ingest/jobs`、`/internal/kb/documents/{document_id}/reindex` 和 `/api/kb/qa/test`。
+- 已将本机 `tools/chat-assistant/backend/.env` 的 `EMBEDDING_DIM` 从 1536 改为 2560（真实 key 未写入文档和 Git）。
+- 已删除空的旧 `kb_chunks` 1536 维索引，并由新流程重建为 2560 维。
+- 已将本机 `kb_document.embedding_dim` 修正为 2560。
+- 已重建 5 个知识库文档索引，当前全部为 `READY`。
+
+### 验证
+
+```text
+python -m compileall tools/chat-assistant/backend/app
+blog-server/mvnw.cmd -q -DskipTests package
+GET  http://localhost:8088/api/chat/health        -> embedding dim = 2560
+GET  http://localhost:8088/openapi.json           -> internal kb routes 存在
+GET  http://localhost:9200/kb_chunks/_mapping     -> embedding.dims = 2560
+GET  http://localhost:9200/kb_chunks/_count       -> count = 470
+POST http://localhost:8088/api/kb/qa/test         -> retrievalType = VECTOR
+POST http://localhost:8080/api/admin/kb/qa/test   -> code = 200, retrievalType = VECTOR
+```
+
+数据库验证：
+
+```text
+kb_document: 5 个文档全部 READY
+kb_document_chunk:
+  文档 1 DONE/DONE 8
+  文档 2 DONE/DONE 11
+  文档 3 DONE/DONE 298
+  文档 4 DONE/DONE 148
+  文档 5 DONE/DONE 5
+```
+
+---
+
 ## RAG 知识空间首次进入为空
 
 **日期**：2026-07-24

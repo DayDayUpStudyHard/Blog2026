@@ -5,7 +5,7 @@
 import socket
 import logging
 
-from elasticsearch import Elasticsearch
+from elasticsearch import BadRequestError, Elasticsearch
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -123,6 +123,14 @@ class ESService:
             return False
 
     # ==================== 索引管理 ====================
+
+    def _embedding_dims(self, index: str) -> int | None:
+        mapping = self.client.indices.get_mapping(index=index)
+        props = mapping[index]["mappings"].get("properties", {})
+        embedding = props.get("embedding")
+        if not embedding:
+            return None
+        return embedding.get("dims")
 
     def ensure_index(self) -> bool:
         """确保索引存在且 mapping 包含 dense_vector 字段。
@@ -303,15 +311,53 @@ class ESService:
     # ==================== 知识库 chunk 索引 ====================
 
     def ensure_kb_index(self) -> bool:
-        """确保知识库 chunk 索引存在。"""
+        """确保知识库 chunk 索引存在且 dense_vector 维度匹配当前配置。"""
         if not _tcp_port_open(self._host, self._port):
             return False
         try:
             exists = self.client.indices.exists(index=self.kb_index)
-            if not exists:
-                self.client.indices.create(index=self.kb_index, body=KB_INDEX_MAPPING)
-                logger.info("Knowledge index '%s' created.", self.kb_index)
+            if exists:
+                actual_dim = self._embedding_dims(self.kb_index)
+                expected_dim = settings.embedding_dim
+                if actual_dim == expected_dim:
+                    return True
+
+                count = self.client.count(index=self.kb_index).get("count", 0)
+                message = (
+                    "Knowledge index '%s' embedding dims mismatch: mapping=%s, config=%s, docs=%s"
+                    % (self.kb_index, actual_dim, expected_dim, count)
+                )
+                if count == 0:
+                    logger.warning("%s. Recreating empty index.", message)
+                    self.client.indices.delete(index=self.kb_index)
+                else:
+                    logger.warning("%s. Please rebuild the index before ingesting.", message)
+                    return False
+
+            self.client.indices.create(index=self.kb_index, body=KB_INDEX_MAPPING)
+            logger.info(
+                "Knowledge index '%s' created with %sd dense_vector mapping.",
+                self.kb_index,
+                settings.embedding_dim,
+            )
             return True
+        except BadRequestError as e:
+            if "resource_already_exists_exception" in str(e):
+                try:
+                    actual_dim = self._embedding_dims(self.kb_index)
+                    if actual_dim == settings.embedding_dim:
+                        return True
+                    logger.warning(
+                        "Knowledge index '%s' already exists but dims mismatch: mapping=%s, config=%s",
+                        self.kb_index,
+                        actual_dim,
+                        settings.embedding_dim,
+                    )
+                except Exception as check_error:
+                    logger.warning("ensure_kb_index post-conflict check failed: %s", check_error)
+            else:
+                logger.warning("ensure_kb_index failed: %s", e)
+            return False
         except Exception as e:
             logger.warning("ensure_kb_index failed: %s", e)
             return False

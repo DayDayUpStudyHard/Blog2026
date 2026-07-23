@@ -301,7 +301,7 @@ kb_chunks
       "embedding_model": { "type": "keyword" },
       "embedding": {
         "type": "dense_vector",
-        "dims": 1536,
+        "dims": 2560,
         "index": true,
         "similarity": "cosine"
       },
@@ -650,7 +650,7 @@ POST /api/kb/eval/run
 EMBEDDING_API_KEY=你的密钥
 EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1
 EMBEDDING_MODEL=Qwen/Qwen3-Embedding-4B
-EMBEDDING_DIM=1536
+EMBEDDING_DIM=2560
 ```
 
 代码需要记录：
@@ -660,7 +660,7 @@ embedding_model
 embedding_dim
 ```
 
-模型更换后，旧 chunk 需要重新索引或重新 embedding。
+`Qwen/Qwen3-Embedding-4B` 当前返回 2560 维向量。模型更换后，旧 chunk 需要重新索引或重新 embedding，并同步重建 ES dense_vector mapping。
 
 ## 14. 删除和恢复
 

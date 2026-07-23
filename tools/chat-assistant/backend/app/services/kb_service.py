@@ -20,6 +20,39 @@ class KbService:
         self.embedding = EmbeddingService()
         self.es = ESService()
 
+    def _index_chunks(
+        self,
+        rows: list[dict],
+        job_id: int,
+        progress_start: int,
+        progress_span: int,
+    ) -> int:
+        if not rows:
+            raise RuntimeError("未解析出可索引内容，请检查文档内容是否为空或格式是否受支持")
+        if not self.es.ensure_kb_index():
+            raise RuntimeError(
+                f"ES 知识库索引不可用或向量维度不匹配，请检查 {settings.kb_index} mapping 和 EMBEDDING_DIM"
+            )
+
+        indexed_count = 0
+        total = len(rows)
+        for i, row in enumerate(rows, 1):
+            vector = self.embedding.embed(row["chunk_text"]) if self.embedding.configured else None
+            if self.embedding.configured and not vector:
+                self.store.mark_chunk(row["id"], "FAILED", "PENDING")
+                continue
+
+            ok = self.es.index_kb_chunk(row, embedding=vector)
+            if ok:
+                indexed_count += 1
+            self.store.mark_chunk(row["id"], "DONE" if vector else "SKIPPED", "DONE" if ok else "FAILED")
+            progress = progress_start + int(i / total * progress_span)
+            self.store.update_job(job_id, "INDEXING", min(progress, 95), f"已索引 {i}/{total} 个切片")
+
+        if indexed_count == 0:
+            raise RuntimeError(f"ES 索引失败：0/{total} 个切片写入成功，请检查 Elasticsearch 日志和 embedding 配置")
+        return indexed_count
+
     def ingest_document(self, payload) -> None:
         doc_id = payload.documentId
         job_id = payload.jobId
@@ -35,24 +68,14 @@ class KbService:
 
             self.store.update_job(job_id, "EMBEDDING", 55, "正在生成向量")
             rows = self.store.get_chunks(doc_id)
-            self.es.ensure_kb_index()
-            total = max(len(rows), 1)
-            for i, row in enumerate(rows, 1):
-                vector = self.embedding.embed(row["chunk_text"]) if self.embedding.configured else None
-                if self.embedding.configured and not vector:
-                    self.store.mark_chunk(row["id"], "FAILED", "PENDING")
-                    continue
-                ok = self.es.index_kb_chunk(row, embedding=vector)
-                self.store.mark_chunk(row["id"], "DONE" if vector else "SKIPPED", "DONE" if ok else "FAILED")
-                progress = 55 + int(i / total * 40)
-                self.store.update_job(job_id, "INDEXING", min(progress, 95), f"已索引 {i}/{len(rows)} 个切片")
+            indexed_count = self._index_chunks(rows, job_id, 55, 40)
 
             self.store.update_document(doc_id, "READY", chunk_count=len(rows), indexed=True)
             self.store.update_job(job_id, "DONE", 100, "导入完成")
             self.store.create_notification(
                 "INGEST_SUCCESS",
                 "知识库文档导入成功",
-                f"{payload.title} 已生成 {len(rows)} 个切片",
+                f"{payload.title} 已生成 {len(rows)} 个切片，成功索引 {indexed_count} 个",
                 "DOCUMENT",
                 doc_id,
             )
@@ -73,17 +96,17 @@ class KbService:
         try:
             rows = self.store.get_chunks(document_id)
             self.store.update_job(job_id, "INDEXING", 20, "正在重建索引")
-            self.es.ensure_kb_index()
             self.es.delete_kb_document(document_id)
-            total = max(len(rows), 1)
-            for i, row in enumerate(rows, 1):
-                vector = self.embedding.embed(row["chunk_text"]) if self.embedding.configured else None
-                ok = self.es.index_kb_chunk(row, embedding=vector)
-                self.store.mark_chunk(row["id"], "DONE" if vector else "SKIPPED", "DONE" if ok else "FAILED")
-                self.store.update_job(job_id, "INDEXING", 20 + int(i / total * 75), f"已索引 {i}/{len(rows)} 个切片")
+            indexed_count = self._index_chunks(rows, job_id, 20, 75)
             self.store.update_document(document_id, "READY", chunk_count=len(rows), indexed=True)
             self.store.update_job(job_id, "DONE", 100, "索引完成")
-            self.store.create_notification("REINDEX_SUCCESS", "知识库文档索引完成", "文档已重新进入 RAG 检索", "DOCUMENT", document_id)
+            self.store.create_notification(
+                "REINDEX_SUCCESS",
+                "知识库文档索引完成",
+                f"文档已重新进入 RAG 检索，成功索引 {indexed_count} 个切片",
+                "DOCUMENT",
+                document_id,
+            )
         except Exception as exc:
             message = str(exc)
             self.store.update_document(document_id, "FAILED", error=message)

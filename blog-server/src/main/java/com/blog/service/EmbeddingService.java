@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * Embedding 向量生成服务。
  * <p>
- * 调用 OpenAI 兼容 API 将文本转为 1536 维语义向量，
+ * 调用 OpenAI 兼容 API 将文本转为语义向量，
  * 供 ES dense_vector kNN 语义搜索使用。
  * <p>
  * 未配置 apiKey 时自动禁用，所有方法返回空数组。
@@ -41,7 +41,7 @@ public class EmbeddingService {
      * 生成文本的 embedding 向量。
      *
      * @param text 输入文本（过长自动截断）
-     * @return 1536 维 float 数组；未启用或失败时返回 {@code null}
+     * @return embedding provider 返回的 float 数组；未启用或失败时返回 {@code null}
      */
     public float[] embed(String text) {
         if (!isEnabled() || text == null || text.isBlank()) {

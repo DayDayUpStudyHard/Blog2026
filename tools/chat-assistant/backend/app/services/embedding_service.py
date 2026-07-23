@@ -12,6 +12,10 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
+class EmbeddingDimensionError(ValueError):
+    """Raised when the provider returns vectors with a dimension that does not match config."""
+
+
 class EmbeddingService:
     """OpenAI 兼容的 Embedding API 客户端。"""
 
@@ -36,11 +40,19 @@ class EmbeddingService:
         """是否已配置 embedding 服务。"""
         return self._configured
 
+    def _validate_dimension(self, vector: list[float]) -> None:
+        actual_dim = len(vector)
+        if self.dim and actual_dim != self.dim:
+            raise EmbeddingDimensionError(
+                f"Embedding 维度不匹配：模型 {self.model} 返回 {actual_dim} 维，"
+                f"但 EMBEDDING_DIM={self.dim}。请修正 .env 并重建 ES 索引。"
+            )
+
     def embed(self, text: str) -> list[float] | None:
         """生成单条文本的 embedding 向量。
 
         Returns:
-            1536 维 float 列表；未配置或失败时返回 None。
+            配置维度的 float 列表；未配置或请求失败时返回 None。
         """
         if not self._configured:
             return None
@@ -49,7 +61,11 @@ class EmbeddingService:
                 model=self.model,
                 input=text[:8192],  # ada-002 max token limit ~8191 tokens ≈ 32K chars
             )
-            return response.data[0].embedding
+            vector = response.data[0].embedding
+            self._validate_dimension(vector)
+            return vector
+        except EmbeddingDimensionError:
+            raise
         except APIError as e:
             logger.warning("Embedding API error: %s", e)
             return None
@@ -74,7 +90,12 @@ class EmbeddingService:
                 model=self.model,
                 input=truncated,
             )
-            return [item.embedding for item in response.data]
+            vectors = [item.embedding for item in response.data]
+            for vector in vectors:
+                self._validate_dimension(vector)
+            return vectors
+        except EmbeddingDimensionError:
+            raise
         except APIError as e:
             logger.warning("Batch embedding API error: %s", e)
             return [[] for _ in texts]

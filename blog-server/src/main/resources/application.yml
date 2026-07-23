@@ -65,6 +65,6 @@ blog:
   # Embedding 向量生成（用于 ES kNN 语义搜索）
   embedding:
     api-key: ${EMBEDDING_API_KEY:}
-    base-url: ${EMBEDDING_BASE_URL:https://api.openai.com/v1}
-    model: ${EMBEDDING_MODEL:text-embedding-ada-002}
-    dim: ${EMBEDDING_DIM:1536}
+    base-url: ${EMBEDDING_BASE_URL:https://api.siliconflow.cn/v1}
+    model: ${EMBEDDING_MODEL:Qwen/Qwen3-Embedding-4B}
+    dim: ${EMBEDDING_DIM:2560}

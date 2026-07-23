@@ -471,7 +471,7 @@ LLM_MODEL=deepseek-chat
 EMBEDDING_API_KEY=
 EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1
 EMBEDDING_MODEL=Qwen/Qwen3-Embedding-4B
-EMBEDDING_DIM=1536
+EMBEDDING_DIM=2560
 
 ES_HOST=http://localhost:9200
 ES_INDEX=blog_articles
@@ -484,7 +484,7 @@ MYSQL_PASSWORD=123456
 MYSQL_DB=blog2026
 ```
 
-> 真实 API Key 不要写入 README 或提交到 Git。ES 需运行中；知识库向量检索需要 embedding 配置和 `kb_chunks` 索引。
+> 真实 API Key 不要写入 README 或提交到 Git。ES 需运行中；知识库向量检索需要 embedding 配置和 `kb_chunks` 索引。`Qwen/Qwen3-Embedding-4B` 当前返回 2560 维向量，切换 embedding 模型后需要同步 `EMBEDDING_DIM` 并重建 ES 向量索引。
 
 ## 小工具平台
 

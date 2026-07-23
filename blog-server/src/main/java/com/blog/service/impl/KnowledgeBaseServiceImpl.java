@@ -64,7 +64,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     @Value("${blog.embedding.model:}")
     private String embeddingModel;
 
-    @Value("${blog.embedding.dim:1536}")
+    @Value("${blog.embedding.dim:2560}")
     private Integer embeddingDim;
 
     @Override

@@ -21,7 +21,7 @@ class Settings:
     embedding_api_key: str = os.getenv("EMBEDDING_API_KEY", "")
     embedding_base_url: str = os.getenv("EMBEDDING_BASE_URL", "")
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "")
-    embedding_dim: int = int(os.getenv("EMBEDDING_DIM", "1536"))
+    embedding_dim: int = int(os.getenv("EMBEDDING_DIM", "2560"))
 
     # ====== Elasticsearch ======
     es_host: str = os.getenv("ES_HOST", "http://localhost:9200")
