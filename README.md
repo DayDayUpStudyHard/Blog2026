@@ -41,7 +41,7 @@ Blog2026/
     │   └── frontend/     # Vue 3 + TypeScript
     └── crypto-toolbox/   # 加密解密工具箱
     │   └── frontend/     # Vue 3 + TypeScript
-    └── chat-assistant/   # AI 智能问答（RAG）
+    └── chat-assistant/   # AI 智能问答 / 知识库 RAG
         └── backend/      # Python FastAPI
 ```
 
@@ -58,7 +58,8 @@ Blog2026/
 | 监控 | Prometheus + Grafana、Spring Boot Actuator |
 | 工程化 | Docker 7 服务编排、CI/CD、全局异常处理、Redis 缓存、限流、AOP 日志 |
 | 缓存防护 | 三级防护体系 — 防穿透（空值缓存）、防雪崩（随机TTL）、防击穿（Redisson分布式锁） |
-| AI 问答 | 基于博客内容的 RAG 智能问答（ES 检索 + DeepSeek LLM），右下角浮窗入口，流式对话 |
+| AI 问答 | 基于博客文章 + 知识库文档的 RAG 智能问答（向量检索 + 关键词 fallback + DeepSeek LLM），右下角浮窗入口，流式对话 |
+| 个人知识库 | Markdown/TXT/PDF 导入、混合切片、MySQL chunk 事实源、ES `kb_chunks` 索引、后台检索测试 |
 | 内容管理 | 文章可见性三态控制 — 公开（展示+RAG）/ 仅AI问答 / 私有 |
 | 前端体验 | 知识库式博客首页、阅读型文章卡片、CMS 工作台后台、亮暗色适配 |
 
@@ -315,19 +316,24 @@ GET /api/articles/top?limit=10  → [{articleId: 5, count: 42}, ...]
 
 > 关键类：[`OperationLogAspect.java`](blog-server/src/main/java/com/blog/aspect/OperationLogAspect.java) — 生产者；[`OperationLogConsumer.java`](blog-server/src/main/java/com/blog/service/impl/OperationLogConsumer.java) — 消费者。
 
-## AI 智能问答（RAG）
+## AI 智能问答与个人知识库（RAG）
 
-基于博客文章内容的检索增强生成（RAG）对话系统。用户通过前台右下角浮窗发起对话，后端检索相关文章并调用 LLM 生成回答。
+Blog2026 已从“基于博客文章的 AI 问答”升级为“个人学习 / 项目 / 面试知识库 RAG 系统”。用户通过前台右下角浮窗发起对话，后台可以上传 Markdown、TXT、PDF 文档；Python `chat-assistant` 统一召回博客文章和知识库文档，再调用 LLM 生成带引用来源的回答。
 
 ### 设计决策
 
 | 决策 | 选择 | 理由 |
 |------|------|------|
-| 检索引擎 | ES IK 中文分词 `multi_match` | 复用已有 ES，零额外成本，关键词匹配效果足够 |
-| 对话后端 | Python FastAPI 微服务 | 复用旅行助手的 OpenAI SDK + 配置模式，SSE streaming 原生支持 |
+| 检索策略 | 向量检索为主，关键词 fallback | embedding 可用时走语义检索；失败或未配置时仍可用 ES 文本检索兜底 |
+| 检索索引 | `blog_articles` + `kb_chunks` | 文章索引和知识库文档索引分开维护，RAG 时统一召回合并 |
+| 事实源 | MySQL 存元数据和 chunk，ES 存检索索引 | MySQL 保留可恢复事实源，ES 专注检索性能 |
+| 文档类型 | Markdown / TXT / PDF | 覆盖个人笔记、项目文档、面试资料的第一版核心格式 |
+| 切片策略 | 标题/段落优先 + 固定长度兜底 + overlap | 优先保留结构语义，长段落仍能稳定进入索引 |
+| 对话后端 | Python FastAPI 微服务 | 文档解析、embedding、ES 检索、RAG prompt 和 SSE streaming 都集中在 AI 服务 |
 | 流式输出 | SSE (Server-Sent Events) | FastAPI `StreamingResponse` + 前端 `ReadableStream`，零额外依赖 |
-| LLM | DeepSeek（OpenAI 兼容） | 与旅行助手共享 `.env` 配置 |
-| 索引更新 | Java 侧 CRUD 时同步 ES | blog-server 已有 ES 索引机制，加 visibility 过滤即可 |
+| LLM | DeepSeek（OpenAI 兼容） | 与现有工具链共享 OpenAI SDK 调用模式 |
+| Embedding | OpenAI 兼容 provider | 默认示例为 SiliconFlow + `Qwen/Qwen3-Embedding-4B`，真实 key 只放 `.env` |
+| 异步导入 | Java 创建任务，Python 后台处理 | 上传立即返回，完成/失败通过后台消息中心提醒 |
 
 ### 架构
 
@@ -336,19 +342,63 @@ blog-front (ChatWindow.vue)
     │  SSE /api/chat/send
     ▼
 nginx → chat-server (FastAPI :8088)
-    ├── ES (blog_articles)  ← 检索 visibility IN(PUBLIC, RAG_ONLY)
+    ├── Embedding API       ← 查询向量 / 文档向量
+    ├── ES blog_articles    ← 检索 PUBLIC / RAG_ONLY 文章
+    ├── ES kb_chunks        ← 检索 READY 知识库文档 chunk
+    ├── MySQL kb_*          ← 文档元数据、chunk、任务、通知
     └── DeepSeek API        ← LLM 流式生成
+
+blog-admin (/knowledge)
+    │  /api/admin/kb/**
+    ▼
+blog-server (Spring Boot :8080)
+    ├── 保存原始文件 upload/knowledge/
+    ├── 创建 kb_document / kb_ingest_job
+    └── 调用 chat-assistant 内部导入/重索引接口
 ```
 
-Java (blog-server) 只负责文章 CRUD 时同步 ES 索引（正文 + visibility），不管 RAG 管道。Python 独立完成检索+对话+SSE。
+Java `blog-server` 负责后台管理、文件保存、任务和通知；Python `chat-assistant` 负责文档解析、混合切片、embedding、ES 索引、统一召回和 RAG 回答。
 
 ### RAG 流程
 
 ```
-用户提问 → ES multi_match 检索 Top-5 → 拼接为上下文 prompt → DeepSeek 流式生成 → SSE 推送前端
+用户提问
+→ 生成 query embedding
+→ 向量检索 blog_articles / kb_chunks
+→ 无向量或无结果时关键词 fallback
+→ 合并并按 score 排序
+→ 过滤不可检索内容
+→ 拼接 RAG prompt
+→ DeepSeek 流式生成
+→ SSE 推送前端并返回引用来源
 ```
 
-### 内容可见性管理
+### 知识库导入流程
+
+```
+后台上传文档
+→ blog-server 保存原始文件
+→ 创建 kb_document 和 kb_ingest_job
+→ chat-assistant 异步解析 MD/TXT/PDF
+→ 标题/段落优先切片，固定长度兜底并保留 overlap
+→ chunk 写入 MySQL
+→ 生成 embedding
+→ 写入 ES kb_chunks
+→ 文档状态更新为 READY
+→ kb_notification 写入导入成功/失败通知
+```
+
+后台 `/knowledge` 页面支持：
+
+- 新建知识库空间
+- 上传 Markdown / TXT / PDF
+- 一键导入 `Debug修复记录.md`
+- 查看文档状态、切片列表和索引状态
+- 重新解析、重新索引
+- 软删除、恢复、永久删除
+- 指定空间或文档做检索测试
+
+### 权限与可见性管理
 
 | 状态 | 展示在网站 | 参与 RAG 检索 | 说明 |
 |------|-----------|-------------|------|
@@ -356,7 +406,7 @@ Java (blog-server) 只负责文章 CRUD 时同步 ES 索引（正文 + visibilit
 | `RAG_ONLY` | ❌ | ✅ | 不出现在博客页面，但可被 AI 检索回答 |
 | `PRIVATE` | ❌ | ❌ | 完全私有，仅管理员可见 |
 
-管理端 ArticleEdit.vue 提供 radio-group 选择，ArticleList.vue 提供筛选。
+知识库文档只有 `READY` 状态可被 RAG 检索；`DISABLED`、`FAILED`、`PARSING`、`INDEXING`、已删除文档都不会进入 RAG。普通搜索只检索 `PUBLIC` 文章，知识库文档不进入普通搜索。
 
 ### 项目结构
 
@@ -364,38 +414,77 @@ Java (blog-server) 只负责文章 CRUD 时同步 ES 索引（正文 + visibilit
 tools/chat-assistant/
 └── backend/
     ├── run.py                 # 启动入口 (uvicorn, port 8088)
-    ├── requirements.txt       # fastapi + openai + elasticsearch
-    ├── .env.example           # LLM_API_KEY / ES_HOST
+    ├── requirements.txt       # fastapi + openai + elasticsearch + pymysql + pypdf
+    ├── .env.example           # LLM / Embedding / ES / MySQL 配置示例
+    ├── scripts/
+    │   └── index_articles.py  # 文章索引脚本
     └── app/
         ├── main.py            # FastAPI app + CORS
         ├── config.py          # 环境变量配置
-        ├── api/routes.py      # POST /send (SSE) + GET /suggestions
+        ├── api/routes.py      # Chat SSE + KB 内部导入/重索引/测试接口
         ├── services/
-        │   ├── es_service.py  # ES multi_match 检索 + visibility 过滤
-        │   └── llm_service.py # prompt 构建 + stream 调用
-        └── models/schemas.py  # ChatRequest / SSEChunk / SourceCitation
+        │   ├── document_parser.py  # MD/TXT/PDF 解析 + 混合切片
+        │   ├── embedding_service.py # OpenAI 兼容 embedding
+        │   ├── es_service.py        # 文章/知识库向量检索 + 关键词 fallback
+        │   ├── kb_store.py          # MySQL 任务、文档、chunk、通知写入
+        │   ├── kb_service.py        # 导入、重索引、QA 测试
+        │   └── llm_service.py       # prompt 构建 + stream 调用
+        └── models/schemas.py        # Chat / KB 请求响应模型
 ```
 
 **SSE 事件格式：**
 
 | Event | Data | 说明 |
 |-------|------|------|
-| `status` | `{"status": "thinking"}` | 开始检索 |
+| `status` | `{"status": "searching"}` / `{"status": "thinking"}` | 检索中 / 生成中 |
 | `chunk` | `{"content": "Spring Boot..."}` | 流式文本 token |
-| `sources` | `{"sources": [{id, title, snippet}]}` | 引用来源 |
+| `sources` | `{"sources": [{sourceType, id, chunkId, title, snippet, page}]}` | 引用来源 |
 | `done` | `{"content": "完整回复"}` | 流结束 |
 | `error` | `{"error": "错误信息"}` | 异常 |
+
+### 数据库迁移
+
+知识库扩展表位于：
+
+```bash
+mysql -u root -p blog2026 < blog-server/sql/knowledge_base.sql
+```
+
+包含 `kb_space`、`kb_document`、`kb_document_chunk`、`kb_ingest_job`、`kb_notification`、`kb_qa_session`、`kb_retrieval_trace`、`kb_eval_case` 等表。
 
 ### 启动
 
 ```bash
 cd tools/chat-assistant/backend
 pip install -r requirements.txt
-cp .env.example .env    # 编辑 .env 填入 LLM_API_KEY
+cp .env.example .env
 python run.py           # → http://localhost:8088
 ```
 
-> **依赖**：ES 需运行中且 `blog_articles` 索引存在（Java 侧自动创建）；LLM API Key 必填。
+`.env` 至少需要配置 LLM；embedding 可选，未配置时自动走关键词 fallback：
+
+```bash
+LLM_API_KEY=your-deepseek-api-key
+LLM_BASE_URL=https://api.deepseek.com
+LLM_MODEL=deepseek-chat
+
+EMBEDDING_API_KEY=
+EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1
+EMBEDDING_MODEL=Qwen/Qwen3-Embedding-4B
+EMBEDDING_DIM=1536
+
+ES_HOST=http://localhost:9200
+ES_INDEX=blog_articles
+KB_INDEX=kb_chunks
+
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=123456
+MYSQL_DB=blog2026
+```
+
+> 真实 API Key 不要写入 README 或提交到 Git。ES 需运行中；知识库向量检索需要 embedding 配置和 `kb_chunks` 索引。
 
 ## 小工具平台
 
